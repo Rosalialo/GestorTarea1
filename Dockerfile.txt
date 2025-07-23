@@ -1,0 +1,20 @@
+# Imagen base: Windows Server Core con IIS
+FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8
+
+# Deshabilita la telemetria
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+# Copia la app publicada al sitio por defecto de IIS
+WORKDIR /inetpub/wwwroot
+COPY published/ .
+
+# Configura seguridad basica de IIS
+RUN powershell -NoProfile -Command \
+    Remove-Item -Recurse -Force C:\inetpub\wwwroot\iisstart.* ; \
+    Set-ItemProperty -Path 'HKLM:\Software\Microsoft\InetStp\' -Name 'EnableAnon' -Value 1
+
+# Expone el puerto estandar de IIS
+EXPOSE 80
+
+# El contenedor arranca con IIS
+ENTRYPOINT ["C:\\ServiceMonitor.exe", "w3svc"]

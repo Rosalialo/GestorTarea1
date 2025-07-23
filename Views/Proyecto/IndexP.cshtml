@@ -1,0 +1,537 @@
+﻿@model GestorTarea.Models.Proyectos
+@{
+    ViewBag.Title = "Detalle del Proyecto";
+    string nombreProyecto = ViewBag.GestorTarea as string;
+}
+
+
+<a href="@Url.Action("Crear", "Proyecto")" class="btn btn-outline-secondary me-2">
+    <i class="fas fa-arrow-left"></i> Volver a mis proyectos
+</a>
+
+<h2 class="text-primary">@Model.Nombre</h2>
+<p>@Model.Descripcion</p>
+
+
+
+
+@Styles.Render("~/Content/IndexP.css")
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h2 class="text-primary">Mi Proyecto</h2>
+            <button id="btnNuevaLista" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nueva Lista de Tareas
+            </button>
+        </div>
+    </div>
+
+    <div id="contenedorListas" class="listas-container d-flex overflow-auto">
+
+    </div>
+</div>
+<!--Modal para crear nueva lista-->
+<div class="modal fade" id="modalNuevaLista" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Lista de Tareas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="nombreLista" class="form-label">Nombre de la Lista</label>
+                    <input type="text" class="form-control" id="nombreLista" placeholder="Ej: Por hacer, En progreso, Completado">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnCrearLista">Crear Lista</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalTarea" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModalTarea">Nueva Tarea</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        Título de la tarea
+                        <div class="mb-3">
+                            <label for="tituloTarea" class="form-label fw-bold">Título</label>
+                            <input type="text" class="form-control" id="tituloTarea" placeholder="Ingresa el título de la tarea">
+                        </div>
+                        <!--Descripció-->
+                        <div class="mb-3">
+                            <label for="descripcionTarea" class="form-label fw-bold">Descripción</label>
+                            <textarea class="form-control" id="descripcionTarea" rows="4" placeholder="Describe los detalles de la tarea..."></textarea>
+                        </div>
+                        <!--Lista de verificación-->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Lista de Verificación</label>
+                            <div id="listaVerificacion">
+                                <!--Los elementos de verificación se agregarán aquí-->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarItem">
+                                <i class="fas fa-plus"></i> Agregar elemento
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <!--prioridad-->
+                        <div class="mb-3">
+                            <label for="prioridadTarea" class="form-label fw-bold">Prioridad</label>
+                            <select class="form-select" id="prioridadTarea">
+                                <option value="baja">🟢 Baja</option>
+                                <option value="media" selected>🟡 Media</option>
+                                <option value="alta">🔴 Alta</option>
+                            </select>
+                        </div>
+                        <!--Fecha de vencimiento-->
+                        <div class="mb-3">
+                            <label for="fechaVencimiento" class="form-label fw-bold">Fecha de Vencimiento</label>
+                            <input type="date" class="form-control" id="fechaVencimiento">
+                        </div>
+                        <!--Estado-->
+                        <div class="mb-3">
+                            <label for="estadoTarea" class="form-label fw-bold">Estado</label>
+                            <select class="form-select" id="estadoTarea">
+                                <option value="pendiente">Pendiente</option>
+                                <option value="en-progreso">En Progreso</option>
+                                <option value="completado">Completado</option>
+                            </select>
+                        </div>
+                        <!--Etiquetas-->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Etiquetas</label>
+                            <div id="etiquetas" class="mb-2">
+                                <!--Las etiquetas seleccionadas aparecerán aquí-->
+                            </div>
+                            <div class="d-flex flex-wrap gap-1">
+                                <span class="badge bg-primary etiqueta-disponible" data-etiqueta="frontend">Frontend</span>
+                                <span class="badge bg-success etiqueta-disponible" data-etiqueta="backend">Backend</span>
+                                <span class="badge bg-warning etiqueta-disponible" data-etiqueta="design">Diseño</span>
+                                <span class="badge bg-info etiqueta-disponible" data-etiqueta="testing">Testing</span>
+                                <span class="badge bg-secondary etiqueta-disponible" data-etiqueta="docs">Documentación</span>
+                            </div>
+                        </div>
+                        <!--Progreso-->
+                        <div class="mb-3">
+                            <label for="progresoTarea" class="form-label fw-bold">Progreso</label>
+                            <input type="range" class="form-range" id="progresoTarea" min="0" max="100" value="0">
+                            <div class="d-flex justify-content-between">
+                                <small>0%</small>
+                                <small id="valorProgreso">0%</small>
+                                <small>100%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btnEliminarTarea" style="display: none;">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarTarea">Guardar Tarea</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<script>
+        let contadorListas = 0;
+        let contadorTareas = 0;
+        let tareaActual = null;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function () {
+            inicializarEventos();
+        });
+
+        function inicializarEventos() {
+            // Botón nueva lista
+            document.getElementById('btnNuevaLista').addEventListener('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('modalNuevaLista'));
+                modal.show();
+            });
+
+            // Crear lista
+            document.getElementById('btnCrearLista').addEventListener('click', crearNuevaLista);
+
+            // Guardar tarea
+            document.getElementById('btnGuardarTarea').addEventListener('click', guardarTarea);
+
+            // Eliminar tarea
+            document.getElementById('btnEliminarTarea').addEventListener('click', eliminarTarea);
+
+            // Agregar item de verificación
+            document.getElementById('btnAgregarItem').addEventListener('click', agregarItemVerificacion);
+
+            // Actualizar progreso
+            document.getElementById('progresoTarea').addEventListener('input', function () {
+                document.getElementById('valorProgreso').textContent = this.value + '%';
+            });
+
+            // Etiquetas
+            document.querySelectorAll('.etiqueta-disponible').forEach(etiqueta => {
+                etiqueta.addEventListener('click', toggleEtiqueta);
+            });
+
+            // Limpiar modal al cerrarse
+            document.getElementById('modalTarea').addEventListener('hidden.bs.modal', limpiarModalTarea);
+        }
+
+        function crearNuevaLista() {
+            const nombreLista = document.getElementById('nombreLista').value.trim();
+
+            if (!nombreLista) {
+                alert('Por favor ingresa un nombre para la lista');
+                return;
+            }
+
+            contadorListas++;
+            const listaId = `lista-${contadorListas}`;
+
+            const listaHTML = `
+            <div class="lista-tareas" id="${listaId}">
+                <div class="lista-header">
+                    <h5 class="lista-titulo">${nombreLista}</h5>
+                    <button class="btn btn-sm btn-link text-muted p-0" onclick="eliminarLista('${listaId}')" title="Eliminar lista">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
+                <div class="tareas-contenedor" data-lista="${listaId}">
+                    <!-- Las tareas se agregarán aquí -->
+                </div>
+                <button class="btn-agregar-tarea" onclick="abrirModalTarea('${listaId}')">
+                    <i class="fas fa-plus"></i> Añade una tarjeta
+                </button>
+            </div>
+        `;
+
+            document.getElementById('contenedorListas').insertAdjacentHTML('beforeend', listaHTML);
+
+            // Cerrar modal y limpiar
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaLista')).hide();
+            document.getElementById('nombreLista').value = '';
+        }
+
+        function eliminarLista(listaId) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta lista y todas sus tareas?')) {
+                document.getElementById(listaId).remove();
+            }
+        }
+
+        function abrirModalTarea(listaId, tareaId = null) {
+            const modal = new bootstrap.Modal(document.getElementById('modalTarea'));
+
+            if (tareaId) {
+                // Editar tarea existente
+                cargarDatosTarea(tareaId);
+                document.getElementById('tituloModalTarea').textContent = 'Editar Tarea';
+                document.getElementById('btnEliminarTarea').style.display = 'inline-block';
+                tareaActual = { listaId, tareaId };
+            } else {
+                // Nueva tarea
+                document.getElementById('tituloModalTarea').textContent = 'Nueva Tarea';
+                document.getElementById('btnEliminarTarea').style.display = 'none';
+                tareaActual = { listaId, tareaId: null };
+            }
+
+            modal.show();
+        }
+
+        function cargarDatosTarea(tareaId) {
+            const tareaElement = document.getElementById(tareaId);
+            const titulo = tareaElement.querySelector('.tarea-titulo').textContent;
+
+            document.getElementById('tituloTarea').value = titulo;
+
+            // Cargar otros datos si están disponibles en el elemento
+            // (prioridad, fecha, progreso, etc.)
+        }
+
+        function guardarTarea() {
+            const titulo = document.getElementById('tituloTarea').value.trim();
+            const descripcion = document.getElementById('descripcionTarea').value.trim();
+            const prioridad = document.getElementById('prioridadTarea').value;
+            const fechaVencimiento = document.getElementById('fechaVencimiento').value;
+            const progreso = document.getElementById('progresoTarea').value;
+            const estado = document.getElementById('estadoTarea').value;
+
+            if (!titulo) {
+                alert('Por favor ingresa un título para la tarea');
+                return;
+            }
+
+            if (tareaActual.tareaId) {
+                // Actualizar tarea existente
+                actualizarTarea(tareaActual.tareaId, {
+                    titulo, descripcion, prioridad, fechaVencimiento, progreso, estado
+                });
+            } else {
+                // Crear nueva tarea
+                crearNuevaTarea(tareaActual.listaId, {
+                    titulo, descripcion, prioridad, fechaVencimiento, progreso, estado
+                });
+            }
+
+            // Cerrar modal
+            bootstrap.Modal.getInstance(document.getElementById('modalTarea')).hide();
+        }
+
+        function crearNuevaTarea(listaId, datos) {
+            contadorTareas++;
+            const tareaId = `tarea-${contadorTareas}`;
+
+            // Obtener etiquetas seleccionadas
+            const etiquetasSeleccionadas = Array.from(document.querySelectorAll('.etiqueta-seleccionada'))
+                .map(etiqueta => etiqueta.dataset.etiqueta);
+
+            // Calcular estado de la fecha
+            let fechaBadge = '';
+            let fechaClase = '';
+            if (datos.fechaVencimiento) {
+                const hoy = new Date();
+                const fechaVencimiento = new Date(datos.fechaVencimiento);
+                const diferenciaDias = Math.ceil((fechaVencimiento - hoy) / (1000 * 60 * 60 * 24));
+
+                if (diferenciaDias < 0) {
+                    fechaClase = 'vencida';
+                } else if (diferenciaDias <= 1) {
+                    fechaClase = 'proxima';
+                }
+
+                fechaBadge = `<span class="badge-icon badge-fecha ${fechaClase}">
+                    <span class="icon-calendar"></span>
+                    ${formatearFecha(datos.fechaVencimiento)}
+                </span>`;
+            }
+
+            // Crear badges de funcionalidad
+            const badgeComentarios = `<span class="badge-icon badge-comentarios">
+                <span class="icon-comment"></span> 3
+            </span>`;
+
+            const badgeChecklist = datos.progreso > 0 ?
+                `<span class="badge-icon badge-checklist ${datos.progreso === 100 ? 'completado' : ''}">
+                    <span class="icon-checklist"></span> ${datos.progreso === 100 ? '✓' : '1/1'}
+                </span>` : '';
+
+            // Crear etiquetas de color
+            const etiquetasColorHTML = etiquetasSeleccionadas.map(etiqueta =>
+                `<span class="etiqueta-tarea etiqueta-${etiqueta}"></span>`
+            ).join('');
+
+            // Crear avatar del asignado
+            const avatarHTML = `<div class="avatar-assignee">
+                ${datos.estado === 'completado' ? 'DM' : datos.estado === 'en-progreso' ? 'OG' : 'JM'}
+            </div>`;
+
+            const tareaHTML = `
+            <div class="tarea-card" id="${tareaId}" onclick="abrirModalTarea('${listaId}', '${tareaId}')">
+                ${etiquetasColorHTML}
+                <div class="tarea-titulo">${datos.titulo}</div>
+                <div class="tarea-footer">
+                    <div class="tarea-icons">
+                        ${fechaBadge}
+                        ${badgeComentarios}
+                        ${badgeChecklist}
+                    </div>
+                    ${avatarHTML}
+                </div>
+            </div>
+        `;
+            // Badge de estado
+            const badgeEstado = `<span class="badge bg-${datos.estado === 'completado' ? 'success' :
+                    datos.estado === 'en-progreso' ? 'warning text-dark' :
+                        'secondary'
+                } text-capitalize">${datos.estado}</span>`;
+
+            const contenedor = document.querySelector(`[data-lista="${listaId}"]`);
+            contenedor.insertAdjacentHTML('beforeend', tareaHTML);
+        }
+
+        function actualizarTarea(tareaId, datos) {
+            const tareaElement = document.getElementById(tareaId);
+            tareaElement.querySelector('.tarea-titulo').textContent = datos.titulo;
+
+            // Recrear la tarea con los nuevos datos
+            const listaId = tareaElement.closest('.lista-tareas').id;
+            tareaElement.remove();
+
+            // Crear nueva tarea con los datos actualizados
+            const nuevoTareaId = tareaId;
+            contadorTareas--; // Compensar el incremento que se hará en crearNuevaTarea
+
+            crearNuevaTarea(listaId, datos);
+
+            // Actualizar el ID de la nueva tarea
+            const nuevaTarea = document.querySelector(`[data-lista="${listaId}"] .tarea-card:last-child`);
+            if (nuevaTarea) {
+                nuevaTarea.id = nuevoTareaId;
+            }
+        }
+
+        function eliminarTarea() {
+            if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+                document.getElementById(tareaActual.tareaId).remove();
+                bootstrap.Modal.getInstance(document.getElementById('modalTarea')).hide();
+            }
+        }
+
+        function agregarItemVerificacion() {
+            const contenedor = document.getElementById('listaVerificacion');
+            const itemId = `item-${Date.now()}`;
+
+            const itemHTML = `
+            <div class="item-verificacion" id="${itemId}">
+                <input type="checkbox">
+                <input type="text" placeholder="Nuevo elemento...">
+                <button type="button" class="btn-eliminar-item" onclick="document.getElementById('${itemId}').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
+            contenedor.insertAdjacentHTML('beforeend', itemHTML);
+        }
+
+        function toggleEtiqueta(event) {
+            event.target.classList.toggle('etiqueta-seleccionada');
+        }
+
+        function limpiarModalTarea() {
+            document.getElementById('tituloTarea').value = '';
+            document.getElementById('descripcionTarea').value = '';
+            document.getElementById('prioridadTarea').value = 'media';
+            document.getElementById('fechaVencimiento').value = '';
+            document.getElementById('progresoTarea').value = '0';
+            document.getElementById('valorProgreso').textContent = '0%';
+            document.getElementById('estadoTarea').value = 'pendiente';
+            document.getElementById('listaVerificacion').innerHTML = '';
+
+            // Limpiar etiquetas seleccionadas
+            document.querySelectorAll('.etiqueta-seleccionada').forEach(etiqueta => {
+                etiqueta.classList.remove('etiqueta-seleccionada');
+            });
+
+            tareaActual = null;
+        }
+
+        function formatearFecha(fecha) {
+            const date = new Date(fecha);
+            const mes = date.toLocaleDateString('es-ES', { month: 'short' });
+            const dia = date.getDate();
+            return `${dia} ${mes}`;
+        }
+        function guardarTarea() {
+        const titulo = document.getElementById('tituloTarea').value.trim();
+        const descripcion = document.getElementById('descripcionTarea').value.trim();
+        const prioridad = document.getElementById('prioridadTarea').value;
+        const fechaVencimiento = document.getElementById('fechaVencimiento').value;
+        const progreso = document.getElementById('progresoTarea').value;
+        const estado = document.getElementById('estadoTarea').value;
+        const idProyecto = @Model.IdProyecto;
+
+        if (!titulo) {
+            alert('Por favor ingresa un título para la tarea');
+            return;
+        }
+
+        $.ajax({
+            url: '@Url.Action("GuardarTarea", "Proyecto")',
+            method: 'POST',
+            data: {
+                idProyecto,
+                titulo,
+                descripcion,
+                prioridad,
+                estado,
+                fechaVencimiento,
+                progreso
+            },
+            success: function (response) {
+                if (response.success) {
+                    crearNuevaTarea(tareaActual.listaId, {
+                        titulo,
+                        descripcion,
+                        prioridad,
+                        fechaVencimiento,
+                        progreso,
+                        estado
+                    });
+                    bootstrap.Modal.getInstance(document.getElementById('modalTarea')).hide();
+                } else {
+                    alert('Error al guardar: ' + response.message);
+                }
+            },
+            error: function () {
+                alert('Error al guardar la tarea');
+            }
+        });
+    }
+
+
+        // Crear algunas listas de ejemplo al cargar la página
+        window.addEventListener('load', function () {
+            // Simular creación de listas de ejemplo
+            setTimeout(() => {
+                document.getElementById('nombreLista').value = 'Terminado';
+                crearNuevaLista();
+
+                // Agregar tareas de ejemplo
+                setTimeout(() => {
+                    // Tarea 1 - Completada
+                    document.getElementById('tituloTarea').value = 'Definir requerimientos del chatbot';
+                    document.getElementById('fechaVencimiento').value = '2025-06-01';
+                    document.getElementById('estadoTarea').value = 'completado';
+                    document.getElementById('progresoTarea').value = '100';
+                    document.querySelectorAll('.etiqueta-disponible')[0].classList.add('etiqueta-seleccionada');
+                    tareaActual = { listaId: 'lista-1', tareaId: null };
+                    guardarTarea();
+
+                    // Tarea 2 - En progreso
+                    setTimeout(() => {
+                        document.getElementById('tituloTarea').value = 'Prototipo visual del chatbot';
+                        document.getElementById('fechaVencimiento').value = '2025-05-28';
+                        document.getElementById('estadoTarea').value = 'en-progreso';
+                        document.getElementById('progresoTarea').value = '50';
+                        limpiarModalTarea();
+                        document.querySelectorAll('.etiqueta-disponible')[2].classList.add('etiqueta-seleccionada');
+                        tareaActual = { listaId: 'lista-1', tareaId: null };
+                        guardarTarea();
+
+                        // Tarea 3 - Pendiente con prioridad alta
+                        setTimeout(() => {
+                            document.getElementById('tituloTarea').value = 'Diseñar flujo de conversación';
+                            document.getElementById('fechaVencimiento').value = '2025-06-03';
+                            document.getElementById('estadoTarea').value = 'pendiente';
+                            document.getElementById('prioridadTarea').value = 'alta';
+                            limpiarModalTarea();
+                            document.querySelectorAll('.etiqueta-disponible')[2].classList.add('etiqueta-seleccionada');
+                            tareaActual = { listaId: 'lista-1', tareaId: null };
+                            guardarTarea();
+                        }, 200);
+                    }, 200);
+                }, 300);
+            }, 500);
+        });
+</script>
+

@@ -1,0 +1,28 @@
+﻿## Visual Studio
+.vs/
+*.user
+*.suo
+*.cache
+*.log
+
+## Build Results
+bin/
+obj/
+[Bb]uild/
+[Rr]elease/
+[Dd]ebug/
+
+## NuGet
+packages/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+
+## IIS Express
+*.vspscc
+*.vssscc
+
+## Others
+*.dbmdl
+*.pdb
+*.vscode/

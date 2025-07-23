@@ -1,0 +1,273 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espacios de Trabajo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    @Styles.Render("~/Content/Crear.css")
+
+    @model GestorTarea.Models.Usuarios
+    
+</head>
+<body>
+    <header class="header">
+        <h1><i class="fas fa-cube"></i> TUS ESPACIOS DE TRABAJO</h1>
+        <nav class="nav-items">
+            <a href="#" class="nav-item active">
+                <i class="fas fa-th-large"></i>
+                Tableros
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-users"></i>
+                Miembros
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-cog"></i>
+                Configuración
+            </a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">Espacios de trabajo</h2>
+        </div>
+
+        <div class="workspaces-grid" id="workspacesGrid">
+            <!-- Tarjeta para crear nuevo proyecto -->
+            <div class="workspace-card create-new" id="btnOpenModal">
+                <div class="create-card-content">
+                    <div class="create-icon"><i class="fas fa-plus"></i></div>
+                    <div class="create-text">Crear un tablero nuevo</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para crear proyecto -->
+        <div id="createProjectModal" class="modal">
+            <div class="modal-content">
+                <button class="close-btn" id="btnCloseModal">&times;</button>
+
+                <div class="modal-header">
+                    <h2 class="modal-title">Crear nuevo proyecto</h2>
+                    <p class="modal-subtitle">Completa la información para comenzar tu nuevo espacio de trabajo</p>
+                </div>
+
+                <div class="modal-body">
+                    <form id="createProjectForm">
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-heading"></i> Título del proyecto *</label>
+                            <input type="text" id="projectTitle" name="title" class="form-input" required maxlength="100">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-align-left"></i> Descripción</label>
+                            <textarea id="projectDescription" name="description" class="form-input form-textarea" maxlength="500"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label"><i class="fas fa-users"></i> Miembros</label>
+                            <div class="radio-group">
+                                <label class="radio-option selected">
+                                    <input type="radio" name="members" value="solo" checked>
+                                    <div class="radio-option-content">
+                                        <span class="radio-option-title">Solo yo</span>
+                                        <span class="radio-option-desc">Proyecto personal</span>
+                                    </div>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="members" value="team">
+                                    <div class="radio-option-content">
+                                        <span class="radio-option-title">Con miembros</span>
+                                        <span class="radio-option-desc">Proyecto colaborativo</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" id="btnCancel">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="btnCreateProject">
+                                <i class="fas fa-plus"></i> Crear Proyecto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let proyectos = [];
+
+        // Función para renderizar proyectos
+        function renderizarProyectos() {
+            const grid = document.getElementById('workspacesGrid');
+
+            // Guardamos el botón "Crear nuevo"
+            const createButton = grid.querySelector('.create-new');
+            grid.innerHTML = '';
+            if (createButton) grid.appendChild(createButton);
+
+            proyectos.forEach(proyecto => {
+                const projectCard = crearTarjetaProyecto(proyecto);
+                grid.appendChild(projectCard);
+            });
+        }
+
+        // Crear tarjeta para un proyecto
+        function crearTarjetaProyecto(proyecto) {
+            const card = document.createElement('div');
+            card.className = 'workspace-card project-card';
+
+            // Agregar atributo data-id para identificar el proyecto
+            card.setAttribute('data-project-id', proyecto.id);
+
+            card.innerHTML = `
+                       <div class="project-header">
+                           <div>
+                               <h3 class="project-title">${proyecto.titulo || proyecto.title}</h3>
+                           </div>
+                           <i class="fas fa-star project-star"></i>
+                       </div>
+                       <p class="project-description">${proyecto.descripcion || proyecto.description || 'Sin descripción'}</p>
+                       <div class="project-footer">
+                           <div class="project-members">
+                               <i class="fas fa-users"></i>
+                               <span>${proyecto.members === 'solo' ? '1 miembro' : `${proyecto.memberCount || 1} miembros`}</span>
+                           </div>
+                           <div class="project-type">
+                               ${proyecto.members === 'solo' ? 'Personal' : 'Colaborativo'}
+                           </div>
+                       </div>
+                   `;
+
+            // Agregar evento click para navegar al proyecto
+            card.addEventListener('click', function () {
+                navegarAProyecto(proyecto.id);
+            });
+
+            return card;
+        }
+
+        // Función para navegar al proyecto específico
+        function navegarAProyecto(proyectoId) {
+            if (!proyectoId) {
+                alert('Error: ID de proyecto no válido');
+                return;
+            }
+
+            // Redirigir a la vista IndexP del controlador Proyecto pasando el ID
+            window.location.href = `/Proyecto/IndexP/${proyectoId}`;
+        }
+
+        // Mostrar modal
+        document.getElementById('btnOpenModal').addEventListener('click', () => {
+            document.getElementById('createProjectModal').classList.add('show');
+        });
+
+        // Cerrar modal
+        document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+        document.getElementById('btnCancel').addEventListener('click', closeModal);
+
+        function closeModal() {
+            document.getElementById('createProjectModal').classList.remove('show');
+            document.getElementById('createProjectForm').reset();
+            document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector('.radio-option').classList.add('selected');
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('createProjectModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Enviar formulario para crear proyecto
+        document.getElementById('createProjectForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const titulo = document.getElementById('projectTitle').value.trim();
+            const descripcion = document.getElementById('projectDescription').value.trim();
+            const tipoMiembros = document.querySelector('input[name="members"]:checked').value;
+
+            if (!titulo) {
+                alert('Por favor, ingresa un título para el proyecto');
+                return;
+            }
+
+            const nuevoProyecto = {
+                title: titulo,
+                description: descripcion,
+                members: tipoMiembros,
+                memberCount: tipoMiembros === 'team' ? 2 : 1 // o cualquier valor por defecto
+            };
+
+            fetch('/Proyecto/CrearProyecto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: nuevoProyecto.title,
+                    description: nuevoProyecto.description,
+                    members: nuevoProyecto.members
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Agregar proyecto recién creado con datos del servidor (incluye id real)
+                        proyectos.push({
+                            id: data.proyecto.id,
+                            titulo: data.proyecto.nombre,
+                            descripcion: data.proyecto.descripcion,
+                            members: nuevoProyecto.members,
+                            memberCount: nuevoProyecto.memberCount
+                        });
+
+                        renderizarProyectos();
+                        alert('✅ Proyecto creado exitosamente: ' + titulo);
+                        closeModal();
+                    } else {
+                        alert('Error al crear proyecto: ' + (data.message || 'Error desconocido'));
+                    }
+                })
+                .catch(() => {
+                    alert('Error de conexión con el servidor.');
+                });
+        });
+
+        // Activar estilo visual de radio-option al hacer clic
+        document.querySelectorAll('.radio-option').forEach(option => {
+            option.addEventListener('click', function () {
+                document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input[type="radio"]').checked = true;
+            });
+        });
+
+        // Al cargar la página, obtener proyectos reales del servidor
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/Proyecto/ObtenerProyectos')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && Array.isArray(data.proyectos)) {
+                        proyectos = data.proyectos.map(p => ({
+                            id: p.id,
+                            titulo: p.titulo,
+                            descripcion: p.descripcion,
+                            members: p.members || 'solo',
+                            memberCount: p.members === 'team' ? 3 : 1 // si tienes cuenta real en backend úsala
+                        }));
+                        renderizarProyectos();
+                    } else {
+                        alert('No se pudieron cargar los proyectos.');
+                    }
+                })
+                .catch(() => {
+                    alert('Error al cargar proyectos desde el servidor.');
+                });
+        });
+
+    </script>
+</body>
+</html>

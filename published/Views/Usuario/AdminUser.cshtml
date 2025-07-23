@@ -1,0 +1,134 @@
+﻿@model List<GestorTarea.Models.Usuarios>
+@{
+    ViewBag.Title = "Usuarios Registrados";
+    var roles = new List<string> { "Usuario", "Administrador", "Invitado" };
+}
+
+<h2 class="text-primary">Usuarios Registrados</h2>
+
+<table class="table table-usuarios">
+    <thead>
+        <tr>
+            <th>Foto</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Activo</th>
+            <th>Fecha</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr data-id="@u.IdUsuario">
+                <td><img class="img-perfil rounded-circle" width="50" height="50" data-userid="@u.IdUsuario" /></td>
+                <td>@u.Name</td>
+                <td>@u.Email</td>
+                <td>
+                    <select class="form-control rol-select">
+                        @foreach (var r in roles)
+                        {
+                            <option value="@r" @(u.Rol == r ? "selected" : "")>@r</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <select class="form-control activo-select">
+                        <option value="true" @(u.Activo ? "selected" : "")>Sí</option>
+                        <option value="false" @(!u.Activo ? "selected" : "")>No</option>
+                    </select>
+                </td>
+                <td>@u.Fecha.ToString("dd/MM/yyyy")</td>
+                <td>
+                    <button class="btn btn-sm btn-success btn-guardar">
+                        <i class="bi bi-check-circle"></i> Guardar
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script src="~/Scripts/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Cargar imágenes de perfil simuladas desde Random User API
+        $('.img-perfil').each(function () {
+            var img = $(this);
+            $.get('https://randomuser.me/api/', function (data) {
+                var foto = data.results[0].picture.thumbnail;
+                img.attr('src', foto);
+            });
+        });
+
+        // Guardar cambios
+        $(".btn-guardar").click(function () {
+            var row = $(this).closest("tr");
+            var id = row.data("id");
+            var rol = row.find(".rol-select").val();
+            var activo = row.find(".activo-select").val();
+
+            $.ajax({
+                url: '@Url.Action("Editar", "Usuario")',
+                method: "POST",
+                data: {
+                    id: id,
+                    rol: rol,
+                    activo: activo
+                },
+                success: function () {
+                    alert("Usuario actualizado correctamente.");
+                },
+                error: function () {
+                    alert("Error al actualizar.");
+                }
+            });
+        });
+    });
+</script>
+
+
+<style>
+    /* Tabla de usuarios personalizada */
+    .table-usuarios {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+        /* Encabezado */
+        .table-usuarios thead {
+            background-color: #343a40;
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .table-usuarios th, .table-usuarios td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        /* Fila intercalada */
+        .table-usuarios tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        /* Hover fila */
+        .table-usuarios tbody tr:hover {
+            background-color: #dee2e6;
+            transition: 0.3s;
+        }
+
+    /* Título */
+    h2.text-primary {
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #0d6efd;
+    }
+</style>

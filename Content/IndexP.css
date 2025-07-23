@@ -1,0 +1,231 @@
+﻿.listas-container {
+    min-height: 500px;
+    gap: 16px;
+    padding: 10px 0;
+}
+
+.lista-tareas {
+    background-color: #f1f2f4;
+    border-radius: 12px;
+    padding: 12px;
+    min-width: 272px;
+    max-width: 272px;
+    box-shadow: 0 1px 0 rgba(9,30,66,.25);
+}
+
+.lista-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 8px 4px;
+}
+
+.lista-titulo {
+    font-weight: 600;
+    color: #172b4d;
+    margin: 0;
+    flex-grow: 1;
+    font-size: 14px;
+}
+
+.btn-agregar-tarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: #5e6c84;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    text-align: left;
+}
+
+    .btn-agregar-tarea:hover {
+        background-color: #ddd;
+        color: #172b4d;
+    }
+
+.tarea-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 0 rgba(9,30,66,.25);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    position: relative;
+}
+
+    .tarea-card:hover {
+        box-shadow: 0 2px 8px rgba(9,30,66,.25);
+    }
+
+.tarea-titulo {
+    font-weight: 400;
+    margin-bottom: 8px;
+    color: #172b4d;
+    font-size: 14px;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.tarea-badges {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+}
+
+.badge-icon {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: normal;
+    gap: 4px;
+}
+
+.badge-fecha {
+    background-color: #fff;
+    color: #5e6c84;
+    border: 1px solid #ddd;
+}
+
+    .badge-fecha.vencida {
+        background-color: #ffeceb;
+        color: #ae2a19;
+        border-color: #ffbdbd;
+    }
+
+    .badge-fecha.proxima {
+        background-color: #fff2cc;
+        color: #7f6000;
+        border-color: #ffd33d;
+    }
+
+.badge-comentarios {
+    background-color: #fff;
+    color: #5e6c84;
+}
+
+.badge-checklist {
+    background-color: #fff;
+    color: #5e6c84;
+}
+
+    .badge-checklist.completado {
+        background-color: #e3fcef;
+        color: #164b35;
+    }
+
+.avatar-assignee {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #0079bf, #026aa7);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: auto;
+}
+
+.tarea-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.tarea-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.etiqueta-disponible {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+    .etiqueta-disponible:hover {
+        transform: scale(1.05);
+    }
+
+.etiqueta-seleccionada {
+    background-color: #0d6efd !important;
+}
+
+.item-verificacion {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 5px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+    .item-verificacion input[type="checkbox"] {
+        margin-right: 8px;
+    }
+
+    .item-verificacion input[type="text"] {
+        flex-grow: 1;
+        border: none;
+        background: transparent;
+        outline: none;
+    }
+
+.btn-eliminar-item {
+    color: #dc3545;
+    border: none;
+    background: none;
+    padding: 0 5px;
+}
+
+/* Etiquetas de color en las tareas */
+.etiqueta-tarea {
+    height: 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.etiqueta-frontend {
+    background-color: #0079bf;
+}
+
+.etiqueta-backend {
+    background-color: #61bd4f;
+}
+
+.etiqueta-design {
+    background-color: #f2d600;
+}
+
+.etiqueta-testing {
+    background-color: #ff9f1a;
+}
+
+.etiqueta-docs {
+    background-color: #c377e0;
+}
+
+/* Iconos personalizados */
+.icon-calendar::before {
+    content: "📅";
+}
+
+.icon-comment::before {
+    content: "💬";
+}
+
+.icon-checklist::before {
+    content: "☑️";
+}

@@ -1,0 +1,19 @@
+services:
+  app:
+    build:
+      context: .
+      # target: final  # Elimina esta línea
+    ports:
+      - "8080:80"
+    depends_on:
+      - sqlserver
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=MiBaseDatos;User Id=sa;Password=MiPassword123!;
+  
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=
+    ports:
+      - "1433:1433"

@@ -1,0 +1,96 @@
+﻿body {
+    /* Fondo general con gradiente rosa */
+
+
+
+    background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 40px 0;
+}
+
+/* Contenedor del formulario */
+form {
+    max-width: 400px;
+    margin: auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Título */
+h2 {
+    text-align: center;
+    color: #d81b60;
+    margin-bottom: 25px;
+}
+
+/* Labels */
+label {
+    font-weight: 600;
+    color: #ad1457;
+}
+
+/* Inputs */
+input.form-control {
+    border: 1px solid #f8bbd0;
+    border-radius: 8px;
+    padding: 10px;
+    width: 100%;
+    transition: 0.3s ease;
+    background-color: #fff0f5;
+}
+
+    input.form-control:focus {
+        border-color: #ec407a;
+        box-shadow: 0 0 5px rgba(236, 64, 122, 0.5);
+        outline: none;
+    }
+
+/* Botón */
+button.btn-primary {
+    background-color: #ec407a;
+    border: none;
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+    button.btn-primary:hover {
+        background-color: #d81b60;
+        cursor: pointer;
+    }
+
+/* Link a registro */
+.mt-3.text-center {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #880e4f;
+}
+
+a.btn-link {
+    color: #d81b60;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+    a.btn-link:hover {
+        text-decoration: underline;
+        color: #ad1457;
+    }
+
+/* Validaciones */
+.text-danger {
+    font-size: 0.85rem;
+    color: #c2185b;
+    margin-top: 4px;
+}
+
+
+

@@ -1,0 +1,29 @@
+﻿@model List<GestorTarea.Models.Tareas>
+
+@{
+    ViewBag.Title = "Lista de Tareas";
+}
+
+<h2>Lista de Tareas</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Fecha Límite</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tarea in Model)
+        {
+            <tr>
+                <td>@tarea.Titulo</td>
+                <td>@tarea.Descripcion</td>
+                <td>@(tarea.FechaLimite?.ToString("dd/MM/yyyy"))</td>
+                <td>@tarea.Estado</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,509 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="GestorTareasModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Adjuntos">
+          <Key>
+            <PropertyRef Name="IdAdjunto" />
+          </Key>
+          <Property Name="IdAdjunto" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="IdTarea" Type="int" Nullable="false" />
+          <Property Name="NombreArchivo" Type="nvarchar" MaxLength="255" Nullable="false" />
+          <Property Name="RutaArchivo" Type="nvarchar" MaxLength="500" Nullable="false" />
+          <Property Name="FechaSubida" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Comentarios">
+          <Key>
+            <PropertyRef Name="IdComentario" />
+          </Key>
+          <Property Name="IdComentario" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="IdTarea" Type="int" Nullable="false" />
+          <Property Name="IdUsuario" Type="int" Nullable="false" />
+          <Property Name="Comentario" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="FechaComentario" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Proyectos">
+          <Key>
+            <PropertyRef Name="IdProyecto" />
+          </Key>
+          <Property Name="IdProyecto" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Nombre" Type="nvarchar" MaxLength="150" Nullable="false" />
+          <Property Name="Descripcion" Type="nvarchar(max)" />
+          <Property Name="FechaInicio" Type="datetime" Nullable="false" />
+          <Property Name="FechaFin" Type="datetime" />
+          <Property Name="Estado" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="IdUsuarioResponsable" Type="int" Nullable="false" />
+          <Property Name="Members" Type="varchar" MaxLength="10" />
+        </EntityType>
+        <EntityType Name="Tareas">
+          <Key>
+            <PropertyRef Name="IdTarea" />
+          </Key>
+          <Property Name="IdTarea" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Titulo" Type="nvarchar" MaxLength="150" Nullable="false" />
+          <Property Name="Descripcion" Type="nvarchar(max)" />
+          <Property Name="FechaCreacion" Type="datetime" Nullable="false" />
+          <Property Name="FechaLimite" Type="datetime" />
+          <Property Name="IdProyecto" Type="int" Nullable="false" />
+          <Property Name="IdUsuarioAsignado" Type="int" />
+          <Property Name="FechaCompletada" Type="datetime" />
+          <Property Name="Progreso" Type="int" Nullable="false" />
+          <Property Name="Estado" Type="nvarchar" MaxLength="50" />
+          <Property Name="Prioridad" Type="nvarchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="UsuarioProyecto">
+          <Key>
+            <PropertyRef Name="IdUsuario" />
+            <PropertyRef Name="IdProyecto" />
+          </Key>
+          <Property Name="IdUsuario" Type="int" Nullable="false" />
+          <Property Name="IdProyecto" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Usuarios">
+          <Key>
+            <PropertyRef Name="IdUsuario" />
+          </Key>
+          <Property Name="IdUsuario" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Email" Type="nvarchar" MaxLength="150" Nullable="false" />
+          <Property Name="Password" Type="nvarchar" MaxLength="255" Nullable="false" />
+          <Property Name="Rol" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="Activo" Type="bit" Nullable="false" />
+          <Property Name="Fecha" Type="datetime" Nullable="false" />
+          <Property Name="FechaUltimoAcceso" Type="datetime" />
+        </EntityType>
+        <Association Name="FK_Adjuntos_Tareas">
+          <End Role="Tareas" Type="Self.Tareas" Multiplicity="1" />
+          <End Role="Adjuntos" Type="Self.Adjuntos" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Tareas">
+              <PropertyRef Name="IdTarea" />
+            </Principal>
+            <Dependent Role="Adjuntos">
+              <PropertyRef Name="IdTarea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Comentarios_Tareas">
+          <End Role="Tareas" Type="Self.Tareas" Multiplicity="1" />
+          <End Role="Comentarios" Type="Self.Comentarios" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Tareas">
+              <PropertyRef Name="IdTarea" />
+            </Principal>
+            <Dependent Role="Comentarios">
+              <PropertyRef Name="IdTarea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Comentarios_Usuarios">
+          <End Role="Usuarios" Type="Self.Usuarios" Multiplicity="1" />
+          <End Role="Comentarios" Type="Self.Comentarios" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Usuarios">
+              <PropertyRef Name="IdUsuario" />
+            </Principal>
+            <Dependent Role="Comentarios">
+              <PropertyRef Name="IdUsuario" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Proyectos_Usuarios">
+          <End Role="Usuarios" Type="Self.Usuarios" Multiplicity="1" />
+          <End Role="Proyectos" Type="Self.Proyectos" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Usuarios">
+              <PropertyRef Name="IdUsuario" />
+            </Principal>
+            <Dependent Role="Proyectos">
+              <PropertyRef Name="IdUsuarioResponsable" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Tareas_Proyectos">
+          <End Role="Proyectos" Type="Self.Proyectos" Multiplicity="1" />
+          <End Role="Tareas" Type="Self.Tareas" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Proyectos">
+              <PropertyRef Name="IdProyecto" />
+            </Principal>
+            <Dependent Role="Tareas">
+              <PropertyRef Name="IdProyecto" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Tareas_Usuarios">
+          <End Role="Usuarios" Type="Self.Usuarios" Multiplicity="0..1" />
+          <End Role="Tareas" Type="Self.Tareas" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Usuarios">
+              <PropertyRef Name="IdUsuario" />
+            </Principal>
+            <Dependent Role="Tareas">
+              <PropertyRef Name="IdUsuarioAsignado" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_UsuarioProyecto_Proyectos">
+          <End Role="Proyectos" Type="Self.Proyectos" Multiplicity="1" />
+          <End Role="UsuarioProyecto" Type="Self.UsuarioProyecto" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Proyectos">
+              <PropertyRef Name="IdProyecto" />
+            </Principal>
+            <Dependent Role="UsuarioProyecto">
+              <PropertyRef Name="IdProyecto" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_UsuarioProyecto_Usuarios">
+          <End Role="Usuarios" Type="Self.Usuarios" Multiplicity="1" />
+          <End Role="UsuarioProyecto" Type="Self.UsuarioProyecto" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Usuarios">
+              <PropertyRef Name="IdUsuario" />
+            </Principal>
+            <Dependent Role="UsuarioProyecto">
+              <PropertyRef Name="IdUsuario" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="GestorTareasModelStoreContainer">
+          <EntitySet Name="Adjuntos" EntityType="Self.Adjuntos" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Comentarios" EntityType="Self.Comentarios" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Proyectos" EntityType="Self.Proyectos" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Tareas" EntityType="Self.Tareas" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="UsuarioProyecto" EntityType="Self.UsuarioProyecto" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Usuarios" EntityType="Self.Usuarios" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK_Adjuntos_Tareas" Association="Self.FK_Adjuntos_Tareas">
+            <End Role="Tareas" EntitySet="Tareas" />
+            <End Role="Adjuntos" EntitySet="Adjuntos" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Comentarios_Tareas" Association="Self.FK_Comentarios_Tareas">
+            <End Role="Tareas" EntitySet="Tareas" />
+            <End Role="Comentarios" EntitySet="Comentarios" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Comentarios_Usuarios" Association="Self.FK_Comentarios_Usuarios">
+            <End Role="Usuarios" EntitySet="Usuarios" />
+            <End Role="Comentarios" EntitySet="Comentarios" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Proyectos_Usuarios" Association="Self.FK_Proyectos_Usuarios">
+            <End Role="Usuarios" EntitySet="Usuarios" />
+            <End Role="Proyectos" EntitySet="Proyectos" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Tareas_Proyectos" Association="Self.FK_Tareas_Proyectos">
+            <End Role="Proyectos" EntitySet="Proyectos" />
+            <End Role="Tareas" EntitySet="Tareas" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Tareas_Usuarios" Association="Self.FK_Tareas_Usuarios">
+            <End Role="Usuarios" EntitySet="Usuarios" />
+            <End Role="Tareas" EntitySet="Tareas" />
+          </AssociationSet>
+          <AssociationSet Name="FK_UsuarioProyecto_Proyectos" Association="Self.FK_UsuarioProyecto_Proyectos">
+            <End Role="Proyectos" EntitySet="Proyectos" />
+            <End Role="UsuarioProyecto" EntitySet="UsuarioProyecto" />
+          </AssociationSet>
+          <AssociationSet Name="FK_UsuarioProyecto_Usuarios" Association="Self.FK_UsuarioProyecto_Usuarios">
+            <End Role="Usuarios" EntitySet="Usuarios" />
+            <End Role="UsuarioProyecto" EntitySet="UsuarioProyecto" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="GestorTareasModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="Usuarios">
+          <Key>
+            <PropertyRef Name="IdUsuario" />
+          </Key>
+          <Property Name="IdUsuario" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Email" Type="String" MaxLength="150" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Password" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Rol" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Activo" Type="Boolean" Nullable="false" />
+          <Property Name="Fecha" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Comentarios" Relationship="GestorTareasModel.FK_Comentarios_Usuarios" FromRole="Usuarios" ToRole="Comentarios" />
+          <NavigationProperty Name="Proyectos" Relationship="GestorTareasModel.FK_Proyectos_Usuarios" FromRole="Usuarios" ToRole="Proyectos" />
+          <NavigationProperty Name="Tareas" Relationship="GestorTareasModel.FK_Tareas_Usuarios" FromRole="Usuarios" ToRole="Tareas" />
+          <NavigationProperty Name="Proyectos1" Relationship="GestorTareasModel.UsuarioProyecto" FromRole="Usuarios" ToRole="Proyectos" />
+          <Property Name="FechaUltimoAcceso" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityContainer Name="GestorTareasEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Usuarios" EntityType="Self.Usuarios" />
+          <EntitySet Name="Adjuntos" EntityType="GestorTareasModel.Adjuntos" />
+          <EntitySet Name="Comentarios" EntityType="GestorTareasModel.Comentarios" />
+          <EntitySet Name="Proyectos" EntityType="GestorTareasModel.Proyectos" />
+          <EntitySet Name="Tareas" EntityType="GestorTareasModel.Tareas" />
+          <AssociationSet Name="FK_Adjuntos_Tareas" Association="GestorTareasModel.FK_Adjuntos_Tareas">
+            <End Role="Tareas" EntitySet="Tareas" />
+            <End Role="Adjuntos" EntitySet="Adjuntos" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Comentarios_Tareas" Association="GestorTareasModel.FK_Comentarios_Tareas">
+            <End Role="Tareas" EntitySet="Tareas" />
+            <End Role="Comentarios" EntitySet="Comentarios" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Comentarios_Usuarios" Association="GestorTareasModel.FK_Comentarios_Usuarios">
+            <End Role="Usuarios" EntitySet="Usuarios" />
+            <End Role="Comentarios" EntitySet="Comentarios" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Proyectos_Usuarios" Association="GestorTareasModel.FK_Proyectos_Usuarios">
+            <End Role="Usuarios" EntitySet="Usuarios" />
+            <End Role="Proyectos" EntitySet="Proyectos" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Tareas_Proyectos" Association="GestorTareasModel.FK_Tareas_Proyectos">
+            <End Role="Proyectos" EntitySet="Proyectos" />
+            <End Role="Tareas" EntitySet="Tareas" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Tareas_Usuarios" Association="GestorTareasModel.FK_Tareas_Usuarios">
+            <End Role="Usuarios" EntitySet="Usuarios" />
+            <End Role="Tareas" EntitySet="Tareas" />
+          </AssociationSet>
+          <AssociationSet Name="UsuarioProyecto" Association="GestorTareasModel.UsuarioProyecto">
+            <End Role="Proyectos" EntitySet="Proyectos" />
+            <End Role="Usuarios" EntitySet="Usuarios" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="Adjuntos">
+          <Key>
+            <PropertyRef Name="IdAdjunto" />
+          </Key>
+          <Property Name="IdAdjunto" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="IdTarea" Type="Int32" Nullable="false" />
+          <Property Name="NombreArchivo" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="RutaArchivo" Type="String" Nullable="false" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="FechaSubida" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Tareas" Relationship="GestorTareasModel.FK_Adjuntos_Tareas" FromRole="Adjuntos" ToRole="Tareas" />
+        </EntityType>
+        <EntityType Name="Comentarios">
+          <Key>
+            <PropertyRef Name="IdComentario" />
+          </Key>
+          <Property Name="IdComentario" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="IdTarea" Type="Int32" Nullable="false" />
+          <Property Name="IdUsuario" Type="Int32" Nullable="false" />
+          <Property Name="Comentario" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="FechaComentario" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Tareas" Relationship="GestorTareasModel.FK_Comentarios_Tareas" FromRole="Comentarios" ToRole="Tareas" />
+          <NavigationProperty Name="Usuarios" Relationship="GestorTareasModel.FK_Comentarios_Usuarios" FromRole="Comentarios" ToRole="Usuarios" />
+        </EntityType>
+        <EntityType Name="Proyectos">
+          <Key>
+            <PropertyRef Name="IdProyecto" />
+          </Key>
+          <Property Name="IdProyecto" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Nombre" Type="String" Nullable="false" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="Descripcion" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="FechaInicio" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="FechaFin" Type="DateTime" Precision="3" />
+          <Property Name="Estado" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="IdUsuarioResponsable" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Usuarios" Relationship="GestorTareasModel.FK_Proyectos_Usuarios" FromRole="Proyectos" ToRole="Usuarios" />
+          <NavigationProperty Name="Tareas" Relationship="GestorTareasModel.FK_Tareas_Proyectos" FromRole="Proyectos" ToRole="Tareas" />
+          <NavigationProperty Name="Usuarios1" Relationship="GestorTareasModel.UsuarioProyecto" FromRole="Proyectos" ToRole="Usuarios" />
+          <Property Name="Members" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
+        </EntityType>
+        <EntityType Name="Tareas">
+          <Key>
+            <PropertyRef Name="IdTarea" />
+          </Key>
+          <Property Name="IdTarea" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Titulo" Type="String" Nullable="false" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="Descripcion" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="FechaCreacion" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="FechaLimite" Type="DateTime" Precision="3" />
+          <Property Name="IdProyecto" Type="Int32" Nullable="false" />
+          <Property Name="IdUsuarioAsignado" Type="Int32" />
+          <Property Name="FechaCompletada" Type="DateTime" Precision="3" />
+          <NavigationProperty Name="Adjuntos" Relationship="GestorTareasModel.FK_Adjuntos_Tareas" FromRole="Tareas" ToRole="Adjuntos" />
+          <NavigationProperty Name="Comentarios" Relationship="GestorTareasModel.FK_Comentarios_Tareas" FromRole="Tareas" ToRole="Comentarios" />
+          <NavigationProperty Name="Proyectos" Relationship="GestorTareasModel.FK_Tareas_Proyectos" FromRole="Tareas" ToRole="Proyectos" />
+          <NavigationProperty Name="Usuarios" Relationship="GestorTareasModel.FK_Tareas_Usuarios" FromRole="Tareas" ToRole="Usuarios" />
+          <Property Name="Progreso" Type="Int32" Nullable="false" />
+          <Property Name="Estado" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Prioridad" Type="String" MaxLength="50" Unicode="true" FixedLength="false" />
+        </EntityType>
+        <Association Name="FK_Adjuntos_Tareas">
+          <End Type="GestorTareasModel.Tareas" Role="Tareas" Multiplicity="1" />
+          <End Type="GestorTareasModel.Adjuntos" Role="Adjuntos" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Tareas">
+              <PropertyRef Name="IdTarea" />
+            </Principal>
+            <Dependent Role="Adjuntos">
+              <PropertyRef Name="IdTarea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Comentarios_Tareas">
+          <End Type="GestorTareasModel.Tareas" Role="Tareas" Multiplicity="1" />
+          <End Type="GestorTareasModel.Comentarios" Role="Comentarios" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Tareas">
+              <PropertyRef Name="IdTarea" />
+            </Principal>
+            <Dependent Role="Comentarios">
+              <PropertyRef Name="IdTarea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Comentarios_Usuarios">
+          <End Type="GestorTareasModel.Usuarios" Role="Usuarios" Multiplicity="1" />
+          <End Type="GestorTareasModel.Comentarios" Role="Comentarios" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Usuarios">
+              <PropertyRef Name="IdUsuario" />
+            </Principal>
+            <Dependent Role="Comentarios">
+              <PropertyRef Name="IdUsuario" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Proyectos_Usuarios">
+          <End Type="GestorTareasModel.Usuarios" Role="Usuarios" Multiplicity="1" />
+          <End Type="GestorTareasModel.Proyectos" Role="Proyectos" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Usuarios">
+              <PropertyRef Name="IdUsuario" />
+            </Principal>
+            <Dependent Role="Proyectos">
+              <PropertyRef Name="IdUsuarioResponsable" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Tareas_Proyectos">
+          <End Type="GestorTareasModel.Proyectos" Role="Proyectos" Multiplicity="1" />
+          <End Type="GestorTareasModel.Tareas" Role="Tareas" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Proyectos">
+              <PropertyRef Name="IdProyecto" />
+            </Principal>
+            <Dependent Role="Tareas">
+              <PropertyRef Name="IdProyecto" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Tareas_Usuarios">
+          <End Type="GestorTareasModel.Usuarios" Role="Usuarios" Multiplicity="0..1" />
+          <End Type="GestorTareasModel.Tareas" Role="Tareas" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Usuarios">
+              <PropertyRef Name="IdUsuario" />
+            </Principal>
+            <Dependent Role="Tareas">
+              <PropertyRef Name="IdUsuarioAsignado" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="UsuarioProyecto">
+          <End Type="GestorTareasModel.Proyectos" Role="Proyectos" Multiplicity="*" />
+          <End Type="GestorTareasModel.Usuarios" Role="Usuarios" Multiplicity="*" />
+        </Association>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="GestorTareasModelStoreContainer" CdmEntityContainer="GestorTareasEntities">
+          <EntitySetMapping Name="Usuarios">
+            <EntityTypeMapping TypeName="GestorTareasModel.Usuarios">
+              <MappingFragment StoreEntitySet="Usuarios">
+                <ScalarProperty Name="FechaUltimoAcceso" ColumnName="FechaUltimoAcceso" />
+                <ScalarProperty Name="IdUsuario" ColumnName="IdUsuario" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
+                <ScalarProperty Name="Password" ColumnName="Password" />
+                <ScalarProperty Name="Rol" ColumnName="Rol" />
+                <ScalarProperty Name="Activo" ColumnName="Activo" />
+                <ScalarProperty Name="Fecha" ColumnName="Fecha" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Adjuntos">
+            <EntityTypeMapping TypeName="GestorTareasModel.Adjuntos">
+              <MappingFragment StoreEntitySet="Adjuntos">
+                <ScalarProperty Name="FechaSubida" ColumnName="FechaSubida" />
+                <ScalarProperty Name="RutaArchivo" ColumnName="RutaArchivo" />
+                <ScalarProperty Name="NombreArchivo" ColumnName="NombreArchivo" />
+                <ScalarProperty Name="IdTarea" ColumnName="IdTarea" />
+                <ScalarProperty Name="IdAdjunto" ColumnName="IdAdjunto" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Comentarios">
+            <EntityTypeMapping TypeName="GestorTareasModel.Comentarios">
+              <MappingFragment StoreEntitySet="Comentarios">
+                <ScalarProperty Name="FechaComentario" ColumnName="FechaComentario" />
+                <ScalarProperty Name="Comentario" ColumnName="Comentario" />
+                <ScalarProperty Name="IdUsuario" ColumnName="IdUsuario" />
+                <ScalarProperty Name="IdTarea" ColumnName="IdTarea" />
+                <ScalarProperty Name="IdComentario" ColumnName="IdComentario" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Proyectos">
+            <EntityTypeMapping TypeName="GestorTareasModel.Proyectos">
+              <MappingFragment StoreEntitySet="Proyectos">
+                <ScalarProperty Name="Members" ColumnName="Members" />
+                <ScalarProperty Name="IdUsuarioResponsable" ColumnName="IdUsuarioResponsable" />
+                <ScalarProperty Name="Estado" ColumnName="Estado" />
+                <ScalarProperty Name="FechaFin" ColumnName="FechaFin" />
+                <ScalarProperty Name="FechaInicio" ColumnName="FechaInicio" />
+                <ScalarProperty Name="Descripcion" ColumnName="Descripcion" />
+                <ScalarProperty Name="Nombre" ColumnName="Nombre" />
+                <ScalarProperty Name="IdProyecto" ColumnName="IdProyecto" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Tareas">
+            <EntityTypeMapping TypeName="GestorTareasModel.Tareas">
+              <MappingFragment StoreEntitySet="Tareas">
+                <ScalarProperty Name="Prioridad" ColumnName="Prioridad" />
+                <ScalarProperty Name="Estado" ColumnName="Estado" />
+                <ScalarProperty Name="Progreso" ColumnName="Progreso" />
+                <ScalarProperty Name="FechaCompletada" ColumnName="FechaCompletada" />
+                <ScalarProperty Name="IdUsuarioAsignado" ColumnName="IdUsuarioAsignado" />
+                <ScalarProperty Name="IdProyecto" ColumnName="IdProyecto" />
+                <ScalarProperty Name="FechaLimite" ColumnName="FechaLimite" />
+                <ScalarProperty Name="FechaCreacion" ColumnName="FechaCreacion" />
+                <ScalarProperty Name="Descripcion" ColumnName="Descripcion" />
+                <ScalarProperty Name="Titulo" ColumnName="Titulo" />
+                <ScalarProperty Name="IdTarea" ColumnName="IdTarea" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <AssociationSetMapping Name="UsuarioProyecto" TypeName="GestorTareasModel.UsuarioProyecto" StoreEntitySet="UsuarioProyecto">
+            <EndProperty Name="Usuarios">
+              <ScalarProperty Name="IdUsuario" ColumnName="IdUsuario" />
+            </EndProperty>
+            <EndProperty Name="Proyectos">
+              <ScalarProperty Name="IdProyecto" ColumnName="IdProyecto" />
+            </EndProperty>
+          </AssociationSetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="false" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="Ninguno" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>
