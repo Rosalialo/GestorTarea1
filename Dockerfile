@@ -1,29 +1,34 @@
-# Multi-stage build para .NET Framework
-FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019 AS build
+## Usar imagen más ligera
+#FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8
+#
+## Establecer directorio de trabajo
+#WORKDIR /inetpub/wwwroot
+#
+## Copiar todos los archivos de la aplicación
+#COPY . .
+#
+## Exponer puerto 80
+#EXPOSE 80
 
-# Instalar NuGet
-RUN powershell -Command "Invoke-WebRequest -Uri 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe' -OutFile 'C:\nuget.exe'"
 
-WORKDIR /src
+# Dockerfile para producción - ASP.NET Framework
+FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8
 
-# Copiar archivos de proyecto
-COPY ["GestorTarea.csproj", "./"]
-COPY ["packages.config", "./"]
-
-# Restaurar paquetes NuGet
-RUN C:\nuget.exe restore
-
-# Copiar el resto del código fuent
-COPY . .
-
-# Compilar el proyecto
-RUN msbuild GestorTarea.csproj /p:Configuration=Release /p:Platform="Any CPU"
-
-# Imagen final para runtime
-FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2019
+# Establecer directorio de trabajo
 WORKDIR /inetpub/wwwroot
 
-# Copiar la aplicación compilada
-COPY --from=build /src .
+# Copiar archivos de la aplicación
+COPY . .
 
+# Configurar IIS para producción
+RUN powershell -NoProfile -Command \
+    Import-module IISAdministration; \
+    Remove-IISSite -Name 'Default Web Site' -Confirm:$false; \
+    New-IISSite -Name 'GestorTarea' -PhysicalPath 'C:\inetpub\wwwroot' -Port 80
+
+# Exponer puerto 80 (HTTP) y 443 (HTTPS)
 EXPOSE 80
+EXPOSE 443
+
+# Configurar variables de entorno
+ENV ASPNETCORE_ENVIRONMENT=Production

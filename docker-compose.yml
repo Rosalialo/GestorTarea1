@@ -1,19 +1,40 @@
+version: '3.8'
+
 services:
-  app:
-    build:
-      context: .
-      # target: final  # Elimina esta línea
-    ports:
-      - "8080:80"
-    depends_on:
-      - sqlserver
-    environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=MiBaseDatos;User Id=sa;Password=MiPassword123!;
-  
-  sqlserver:
+  # Base de datos SQL Server
+  database:
     image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: gestortarea_db
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=
+      - SA_PASSWORD=${DB_PASSWORD:-GestorTarea123!}
+      - MSSQL_PID=Express
     ports:
-      - "1433:1433"
+      - "${DB_PORT:-1433}:1433"
+    volumes:
+      - db_data:/var/opt/mssql
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # Aplicación ASP.NET MVC
+  webapp:
+    build: .
+    container_name: gestortarea_app
+    ports:
+      - "${PORT:-80}:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DATABASE_URL=Server=database,1433;Database=GestorTarea;User Id=sa;Password=${DB_PASSWORD:-GestorTarea123!};TrustServerCertificate=true;
+    depends_on:
+      - database
+    networks:
+      - app_network
+    restart: unless-stopped
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  db_data:
