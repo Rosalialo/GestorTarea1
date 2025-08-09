@@ -9,7 +9,7 @@ using System.Data.Entity;
 namespace GestorTarea.Controllers
 {
     public class ProyectoController : Controller
-    {
+    {// Esta clase maneja la lógica de los proyectos, incluyendo la creación, edición, eliminación y visualización de proyectos y tareas
         private readonly GestorTareasEntities db = new GestorTareasEntities();
 
         // GET: Proyecto - Vista principal con grid de proyectos

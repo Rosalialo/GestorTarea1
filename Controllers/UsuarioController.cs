@@ -9,16 +9,17 @@ using System.Web.Mvc;
 namespace GestorTarea.Controllers
 {
     public class UsuarioController : Controller
-    {
+    {// Esta clase maneja la autenticación de usuarios, registro y administración de usuarios
         private readonly GestorTareasEntities db = new GestorTareasEntities();
 
         public static class HashHelper
         {
+            // Método para hashear contraseñas usando SHA256
             public static string Hash(string input)
             {
                 if (string.IsNullOrEmpty(input))
                     return string.Empty;
-
+                // Asegúrate de usar un algoritmo seguro para hashear contraseñas
                 using (var sha = SHA256.Create())
                 {
                     var bytes = Encoding.UTF8.GetBytes(input);
@@ -34,7 +35,7 @@ namespace GestorTarea.Controllers
         {
             return View();
         }
-
+        // POST para procesar el login
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Login(Usuarios model)
@@ -42,7 +43,7 @@ namespace GestorTarea.Controllers
             if (ModelState.IsValid)
             {
                 try
-                {
+                {// Validar si el usuario ya está en sesión
                     string hashedPassword = HashHelper.Hash(model.Password);
 
                     var usuario = db.Usuarios.FirstOrDefault(u =>
@@ -51,7 +52,7 @@ namespace GestorTarea.Controllers
                         u.Activo == true);
 
                     if (usuario != null)
-                    {
+                    {// Usuario encontrado y activo
                         usuario.FechaUltimoAcceso = DateTime.Now;
                         db.SaveChanges();
 
@@ -66,16 +67,16 @@ namespace GestorTarea.Controllers
 
                         return RedirectToAction("Crear", "Proyecto");
                     }
-
+                    // Usuario no encontrado o inactivo
                     ModelState.AddModelError("", "Credenciales inválidas.");
                 }
                 catch (EntityCommandCompilationException ex)
-                {
+                {// Manejo de excepciones específicas de Entity Framework
                     System.Diagnostics.Debug.WriteLine($"Error EF: {ex.Message}");
                     ModelState.AddModelError("", "Error del sistema");
                 }
                 catch (Exception ex)
-                {
+                {// Manejo de excepciones generales
                     System.Diagnostics.Debug.WriteLine($"Error general: {ex.Message}");
                     ModelState.AddModelError("", "Error inesperado");
                 }
@@ -83,7 +84,7 @@ namespace GestorTarea.Controllers
 
             return View(model);
         }
-
+        // Método para cerrar sesión
         public ActionResult Logout()
         {
             Session.Clear();
@@ -102,14 +103,14 @@ namespace GestorTarea.Controllers
         public ActionResult Registro(User model)
         {
             if (ModelState.IsValid)
-            {
+            {// Validar si el correo ya está registrado
                 if (db.Usuarios.Any(u => u.Email == model.Email))
                 {
                     ModelState.AddModelError("Email", "Este correo ya está registrado.");
                     return View(model);
                 }
                 try
-                {
+                {// Crear un nuevo usuario
                     var usuario = new Usuarios
                     {
                         Name = model.Name,
@@ -122,12 +123,12 @@ namespace GestorTarea.Controllers
 
                     db.Usuarios.Add(usuario);
                     db.SaveChanges();
-
+                    // Limpiar la sesión antes de redirigir
                     TempData["mensaje"] = "Usuario registrado correctamente";
                     return RedirectToAction("Registro");
                 }
                 catch (Exception ex)
-                {
+                {// Manejo de excepciones
                     ModelState.AddModelError("", "Error inesperado: " + ex.Message);
                 }
             }
@@ -136,11 +137,11 @@ namespace GestorTarea.Controllers
         }
 
         // Otros métodos: Index, Editar, AdminUser, etc. los puedes mantener igual
- 
 
 
 
-    public ActionResult Index()
+        // Método para mostrar la lista de usuarios (solo si el usuario es administrador)
+        public ActionResult Index()
             {// Verificar si el usuario está en sesión
                 if (Session["Usuario"] == null)
                 {
@@ -152,9 +153,9 @@ namespace GestorTarea.Controllers
             }
 
 
+        // Método para editar un usuario (solo si el usuario es administrador)
 
-
-            [HttpPost]
+        [HttpPost]
             public ActionResult Editar(int id, string rol, bool activo)
             {
                 // Verificar si el usuario está en sesión y es administrador
@@ -183,8 +184,8 @@ namespace GestorTarea.Controllers
             }
 
 
-
-            public ActionResult AdminUser()
+        // Método para mostrar la lista de usuarios (solo si el usuario es administrador)
+        public ActionResult AdminUser()
             {
                 // Validar si el usuario está en sesión y tiene rol de Administrador
                 if (!(Session["Rol"]?.ToString() == "Administrador") || Session["Usuario"] == null)

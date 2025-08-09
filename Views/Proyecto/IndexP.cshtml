@@ -183,10 +183,10 @@
         document.getElementById('modalTarea').addEventListener('hidden.bs.modal', limpiarModalTarea);
     }
 
-    // ✅ CORREGIDO: Cargar tareas usando la API correcta
+    //Cargar tareas usando la API correcta
     function cargarTareasExistentes() {
         const token = localStorage.getItem('token');
-
+        //
         $.ajax({
             url: `/Proyecto/ObtenerTareasPorProyecto?idProyecto=${idProyecto}`,
             method: 'GET',
@@ -244,12 +244,12 @@
         document.getElementById('contenedorListas').insertAdjacentHTML('beforeend', listaHTML);
     }
 
-    // ✅ CORREGIDO: Usar los campos correctos de la API
+    //  los campos correctos de la API
     function distribuirTareasExistentes() {
         tareasExistentes.forEach(tarea => {
             let listaDestino = 'lista-1'; // Por defecto "Por Hacer"
 
-            // ✅ Usar campo Estado del modelo Tareas
+            //ampo Estado del modelo Tareas
             if (tarea.Estado === 'en-progreso' || tarea.Estado === 'En Progreso') {
                 listaDestino = 'lista-2'; // "En Progreso"
             } else if (tarea.Estado === 'completado' || tarea.Estado === 'Completado') {
@@ -260,7 +260,7 @@
         });
     }
 
-    // ✅ CORREGIDO: Usar campos correctos de la respuesta API
+    // Usar campos correctos de la respuesta API
     function mostrarTareaEnLista(listaId, tarea) {
         const tareaId = `tarea-db-${tarea.IdTarea}`; // ✅ Usar IdTarea
 
@@ -309,13 +309,13 @@
     }
 
     function editarTareaExistente(tareaId, listaId) {
-        const tarea = tareasExistentes.find(t => t.IdTarea === tareaId); // ✅ Usar IdTarea
+        const tarea = tareasExistentes.find(t => t.IdTarea === tareaId); // Usar IdTarea
         if (tarea) {
-            // ✅ Cargar datos usando campos correctos
+            //Cargar datos usando campos correctos
             document.getElementById('tituloTarea').value = tarea.Titulo;
             document.getElementById('descripcionTarea').value = tarea.Descripcion || '';
             document.getElementById('estadoTarea').value = tarea.Estado || 'pendiente';
-
+            //  
             document.getElementById('tituloModalTarea').textContent = 'Editar Tarea';
             document.getElementById('btnEliminarTarea').style.display = 'inline-block';
 
@@ -330,7 +330,7 @@
             modal.show();
         }
     }
-
+    //
     function crearNuevaLista() {
         const nombreLista = document.getElementById('nombreLista').value.trim();
 
@@ -374,7 +374,7 @@
         document.getElementById('tituloTarea').value = titulo;
     }
 
-    // ✅ CORREGIDO: Usar API de tareas para crear
+    //  Usar API de tareas para crear
     function guardarTarea() {
         const titulo = document.getElementById('tituloTarea').value.trim();
         const descripcion = document.getElementById('descripcionTarea').value.trim();
@@ -390,7 +390,7 @@
             alert('Función de actualización pendiente de implementar');
             bootstrap.Modal.getInstance(document.getElementById('modalTarea')).hide();
         } else {
-            // ✅ Crear nueva tarea usando la API correcta
+            //rear nueva tarea usando la API correcta
             const token = localStorage.getItem('token');
 
             $.ajax({
@@ -408,8 +408,7 @@
                 }),
                 success: function (response) {
                     console.log('Tarea creada:', response);
-
-                    // ✅ Recargar tareas para que todos los usuarios las vean
+                    // Recargar tareas para que todos los usuarios las vean
                     cargarTareasExistentes();
 
                     // Limpiar listas y recargar
@@ -428,7 +427,7 @@
         }
     }
 
-    // ✅ NUEVA FUNCIÓN: Limpiar y recargar todas las tareas
+    // Limpiar y recargar todas las tareas
     function limpiarYRecargarTareas() {
         // Limpiar todas las listas
         document.querySelectorAll('.tareas-contenedor').forEach(contenedor => {
@@ -441,7 +440,7 @@
         }, 200);
     }
 
-    // ✅ NUEVA FUNCIÓN: Recargar tareas periódicamente (opcional)
+    // Recargar tareas periódicamente (opcional)
     function iniciarActualizacionPeriodica() {
         setInterval(() => {
             cargarTareasExistentes();
