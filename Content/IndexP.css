@@ -229,3 +229,132 @@
 .icon-checklist::before {
     content: "☑️";
 }
+
+/* Agrega este CSS adicional a tu archivo IndexP.css */
+
+/* Estilo para la información del proyecto */
+.proyecto-info {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border-left: 4px solid #0079bf;
+}
+
+.proyecto-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #5e6c84;
+}
+
+    .proyecto-meta i {
+        width: 16px;
+        text-align: center;
+    }
+
+/* Botón de eliminar proyecto */
+.btn-eliminar-proyecto {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+    .btn-eliminar-proyecto:hover {
+        background-color: #c82333;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    }
+
+/* Responsive para dispositivos móviles */
+@media (max-width: 768px) {
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .proyecto-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .btn-eliminar-proyecto {
+        align-self: flex-end;
+    }
+}
+
+/* Mejoras para las tareas */
+.tarea-card.tarea-existente {
+    border-left: 3px solid #0079bf;
+}
+
+.tarea-card.tarea-nueva {
+    border-left: 3px solid #61bd4f;
+}
+
+/* Estados de las tareas */
+.tarea-card[data-estado="completado"] {
+    opacity: 0.8;
+    background-color: #f8fff9;
+}
+
+.tarea-card[data-estado="en-progreso"] {
+    background-color: #fff8e6;
+}
+
+.tarea-card[data-estado="pendiente"] {
+    background-color: #ffffff;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tarea-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Indicador de carga */
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #5e6c84;
+}
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0079bf;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

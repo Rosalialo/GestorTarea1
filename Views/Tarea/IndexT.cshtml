@@ -1,1 +1,374 @@
-﻿
+﻿from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+import time
+
+class GestorTareaAutomation:
+    def __init__(self, driver_path=None):
+        """
+        Automatización para el sistema GestorTarea con ASP.NET MVC 5
+
+        Args:
+            driver_path: Ruta al chromedriver (opcional si está en PATH)
+        """
+        self.driver = None
+        self.wait = None
+        self.driver_path = driver_path
+
+    def setup_driver(self, headless=False):
+        """Configura el navegador Chrome"""
+        chrome_options = Options()
+        if headless:
+            chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option('useAutomationExtension', False)
+
+        if self.driver_path:
+            service = Service(self.driver_path)
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        else:
+            self.driver = webdriver.Chrome(options=chrome_options)
+
+        self.wait = WebDriverWait(self.driver, 15)
+
+    def login(self, url, email, password):
+        """
+        Realiza el login en GestorTarea
+
+        Args:
+            url: URL de la página de login (ej: http://localhost:xxxxx/Usuario/Login)
+            email: Email del usuario
+            password: Contraseña
+        """
+        print("1. Abriendo navegador y navegando a la página de login...")
+        self.driver.get(url)
+
+        print("2. Ingresando credenciales...")
+
+        # Buscar campo Email
+        email_field = self.wait.until(
+            EC.presence_of_element_located((By.ID, "Email"))
+        )
+        email_field.clear()
+        email_field.send_keys(email)
+
+        # Buscar campo Password
+        password_field = self.driver.find_element(By.ID, "Password")
+        password_field.clear()
+        password_field.send_keys(password)
+
+        # Hacer clic en botón "Iniciar Sesión"
+        login_btn = self.driver.find_element(By.XPATH, "//button[@type='submit' and contains(text(), 'Iniciar Sesión')]")
+        login_btn.click()
+
+        # Esperar a que cargue la página de proyectos
+        self.wait.until(
+        EC.presence_of_element_located((By.CLASS_NAME, "workspaces-grid"))
+        )
+
+        print("3. Login exitoso! Redirigido a página de proyectos.")
+
+        def crear_proyecto(self, proyecto_data):
+        """
+        Crea un nuevo proyecto
+
+        Args:
+        proyecto_data: Diccionario con datos del proyecto
+        {
+        'title': 'Mi Proyecto',
+        'description': 'Descripción del proyecto',
+        'members': 'solo' | 'team'
+        }
+        """
+        print("4. Abriendo modal de nuevo proyecto...")
+
+        # Hacer clic en el botón "Crear un tablero nuevo"
+        create_btn = self.wait.until(
+        EC.element_to_be_clickable((By.ID, "btnOpenModal"))
+        )
+        create_btn.click()
+
+        # Esperar a que aparezca el modal
+        modal = self.wait.until(
+        EC.visibility_of_element_located((By.ID, "createProjectModal"))
+        )
+
+        print("5. Llenando formulario del proyecto...")
+
+        # Título del proyecto
+        title_field = self.wait.until(
+        EC.presence_of_element_located((By.ID, "projectTitle"))
+        )
+        title_field.clear()
+        title_field.send_keys(proyecto_data['title'])
+        print(f"   - Título: {proyecto_data['title']}")
+
+        # Descripción (opcional)
+        if 'description' in proyecto_data and proyecto_data['description']:
+        desc_field = self.driver.find_element(By.ID, "projectDescription")
+        desc_field.clear()
+        desc_field.send_keys(proyecto_data['description'])
+        print(f"   - Descripción: {proyecto_data['description']}")
+
+        # Seleccionar tipo de miembros
+        if 'members' in proyecto_data:
+        if proyecto_data['members'] == 'team':
+        team_radio = self.driver.find_element(By.XPATH, "//input[@value='team']")
+        team_radio.click()
+        print("   - Tipo: Proyecto colaborativo")
+        else:
+        solo_radio = self.driver.find_element(By.XPATH, "//input[@value='solo']")
+        solo_radio.click()
+        print("   - Tipo: Proyecto personal")
+
+        # Hacer clic en "Crear Proyecto"
+        create_project_btn = self.driver.find_element(By.ID, "btnCreateProject")
+        create_project_btn.click()
+
+        print("6. Guardando proyecto...")
+
+        # Esperar a que se cierre el modal y se actualice la página
+        self.wait.until(
+        EC.invisibility_of_element_located((By.ID, "createProjectModal"))
+        )
+
+        time.sleep(2)  # Dar tiempo para que se procese la creación
+        print("7. Proyecto creado exitosamente!")
+
+        def abrir_proyecto(self, nombre_proyecto=None, index_proyecto=0):
+        """
+        Abre un proyecto específico
+
+        Args:
+        nombre_proyecto: Nombre del proyecto a abrir (opcional)
+        index_proyecto: Índice del proyecto si no se especifica nombre (default: 0)
+        """
+        print("8. Abriendo proyecto...")
+
+        if nombre_proyecto:
+        # Buscar proyecto por nombre
+        proyecto_card = self.wait.until(
+        EC.element_to_be_clickable((By.XPATH, f"//h3[contains(text(), '{nombre_proyecto}')]/ancestor::div[contains(@class, 'workspace-card')]"))
+        )
+        else:
+        # Tomar el primer proyecto disponible (excluyendo el botón crear)
+        proyecto_cards = self.wait.until(
+        EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".workspace-card.project-card"))
+        )
+        if len(proyecto_cards) > index_proyecto:
+        proyecto_card = proyecto_cards[index_proyecto]
+        else:
+        raise Exception("No se encontró ningún proyecto para abrir")
+
+        proyecto_card.click()
+
+        # Esperar a que cargue la vista del proyecto
+        self.wait.until(
+        EC.presence_of_element_located((By.ID, "contenedorListas"))
+        )
+
+        print("9. Proyecto abierto exitosamente!")
+
+        def crear_tarea(self, tarea_data):
+        """
+        Crea una nueva tarea en el proyecto actual
+
+        Args:
+        tarea_data: Diccionario con datos de la tarea
+        {
+        'titulo': 'Mi Tarea',
+        'descripcion': 'Descripción de la tarea',
+        'prioridad': 'baja' | 'media' | 'alta',
+        'fecha_vencimiento': '2024-12-31',
+        'estado': 'pendiente' | 'en-progreso' | 'completado',
+        'progreso': 0-100,
+        'lista': 'Por Hacer' | 'En Progreso' | 'Completado' (opcional)
+        }
+        """
+        print("10. Creando nueva tarea...")
+
+        # Determinar en qué lista crear la tarea
+        lista_objetivo = tarea_data.get('lista', 'Por Hacer')
+
+        # Buscar el botón "Añade una tarjeta" de la lista correspondiente
+        if lista_objetivo == 'En Progreso':
+        lista_selector = ".lista-tareas:nth-child(2) .btn-agregar-tarea"
+        elif lista_objetivo == 'Completado':
+        lista_selector = ".lista-tareas:nth-child(3) .btn-agregar-tarea"
+        else:  # Por Hacer (default)
+        lista_selector = ".lista-tareas:nth-child(1) .btn-agregar-tarea"
+
+        add_task_btn = self.wait.until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, lista_selector))
+        )
+        add_task_btn.click()
+
+        # Esperar a que aparezca el modal
+        modal = self.wait.until(
+        EC.visibility_of_element_located((By.ID, "modalTarea"))
+        )
+
+        print("11. Llenando formulario de la tarea...")
+
+        # Título de la tarea (obligatorio)
+        titulo_field = self.wait.until(
+        EC.presence_of_element_located((By.ID, "tituloTarea"))
+        )
+        titulo_field.clear()
+        titulo_field.send_keys(tarea_data['titulo'])
+        print(f"    - Título: {tarea_data['titulo']}")
+
+        # Descripción (opcional)
+        if 'descripcion' in tarea_data and tarea_data['descripcion']:
+        desc_field = self.driver.find_element(By.ID, "descripcionTarea")
+        desc_field.clear()
+        desc_field.send_keys(tarea_data['descripcion'])
+        print(f"    - Descripción: {tarea_data['descripcion']}")
+
+        # Prioridad
+        if 'prioridad' in tarea_data:
+        prioridad_select = Select(self.driver.find_element(By.ID, "prioridadTarea"))
+        prioridad_select.select_by_value(tarea_data['prioridad'])
+        print(f"    - Prioridad: {tarea_data['prioridad'].capitalize()}")
+
+        # Fecha de vencimiento
+        if 'fecha_vencimiento' in tarea_data and tarea_data['fecha_vencimiento']:
+        fecha_field = self.driver.find_element(By.ID, "fechaVencimiento")
+        fecha_field.clear()
+        fecha_field.send_keys(tarea_data['fecha_vencimiento'])
+        print(f"    - Fecha de vencimiento: {tarea_data['fecha_vencimiento']}")
+
+        # Estado
+        if 'estado' in tarea_data:
+        estado_select = Select(self.driver.find_element(By.ID, "estadoTarea"))
+        estado_select.select_by_value(tarea_data['estado'])
+        print(f"    - Estado: {tarea_data['estado'].replace('-', ' ').title()}")
+
+        # Progreso
+        if 'progreso' in tarea_data:
+        progreso_slider = self.driver.find_element(By.ID, "progresoTarea")
+        # Limpiar el valor actual y establecer el nuevo
+        self.driver.execute_script(f"document.getElementById('progresoTarea').value = {tarea_data['progreso']};")
+        self.driver.execute_script(f"document.getElementById('valorProgreso').textContent = '{tarea_data['progreso']}%';")
+        print(f"    - Progreso: {tarea_data['progreso']}%")
+
+        print("12. Guardando tarea...")
+
+        # Hacer clic en "Guardar Tarea"
+        save_btn = self.driver.find_element(By.ID, "btnGuardarTarea")
+        save_btn.click()
+
+        # Esperar a que se cierre el modal
+        self.wait.until(
+        EC.invisibility_of_element_located((By.ID, "modalTarea"))
+        )
+
+        time.sleep(2)  # Dar tiempo para que se procese
+        print("13. Tarea creada exitosamente!")
+
+        def verificar_tarea_creada(self, titulo_tarea):
+        """
+        Verifica que la tarea se haya creado correctamente
+
+        Args:
+        titulo_tarea: Título de la tarea a verificar
+
+        Returns:
+        bool: True si la tarea existe, False en caso contrario
+        """
+        print(f"14. Verificando que la tarea '{titulo_tarea}' se haya creado...")
+
+        try:
+        tarea_element = self.wait.until(
+        EC.presence_of_element_located((By.XPATH, f"//div[contains(@class, 'tarea-titulo') and contains(text(), '{titulo_tarea}')]"))
+        )
+        print("✅ Tarea verificada exitosamente!")
+        return True
+        except:
+        print("❌ No se pudo verificar la tarea")
+        return False
+
+        def flujo_completo(self, login_url, email, password, proyecto_data, tarea_data):
+        """
+        Ejecuta el flujo completo de automatización
+
+        Args:
+        login_url: URL de login
+        email: Email del usuario
+        password: Contraseña
+        proyecto_data: Datos del proyecto a crear
+        tarea_data: Datos de la tarea a crear
+        """
+        try:
+        self.setup_driver()
+
+        # Paso 1-3: Login
+        self.login(login_url, email, password)
+
+        # Paso 4-7: Crear proyecto
+        self.crear_proyecto(proyecto_data)
+
+        # Paso 8-9: Abrir proyecto
+        self.abrir_proyecto(proyecto_data['title'])
+
+        # Paso 10-13: Crear tarea
+        self.crear_tarea(tarea_data)
+
+        # Paso 14: Verificar tarea
+        tarea_verificada = self.verificar_tarea_creada(tarea_data['titulo'])
+
+        if tarea_verificada:
+        print("\n🎉 ¡FLUJO COMPLETADO EXITOSAMENTE!")
+        print("✅ Login realizado")
+        print("✅ Proyecto creado")
+        print("✅ Tarea creada")
+        print("✅ Tarea verificada")
+        else:
+        print("\n⚠️ Flujo completado con advertencias")
+
+        time.sleep(3)  # Pausa para ver el resultado
+
+        except Exception as e:
+        print(f"\n❌ Error en el flujo: {str(e)}")
+        raise
+        finally:
+        if self.driver:
+        self.driver.quit()
+
+        # Ejemplo de uso
+        if __name__ == "__main__":
+        # Configuración
+        LOGIN_URL = "http://localhost:44306/Usuario/Login"  # Ajusta el puerto según tu config
+        EMAIL = "usuario@ejemplo.com"
+        PASSWORD = "tu_password"
+
+        # Datos del proyecto
+        proyecto_data = {
+        'title': 'Proyecto de Prueba Automatizado',
+        'description': 'Este proyecto fue creado mediante automatización con Selenium',
+        'members': 'solo'
+        }
+
+        # Datos de la tarea
+        tarea_data = {
+        'titulo': 'Tarea de Prueba Automatizada',
+        'descripcion': 'Esta tarea fue creada automáticamente para probar el sistema',
+        'prioridad': 'alta',
+        'fecha_vencimiento': '2024-12-31',
+        'estado': 'pendiente',
+        'progreso': 25,
+        'lista': 'Por Hacer'
+        }
+
+        # Ejecutar automatización
+        automation = GestorTareaAutomation()
+        automation.flujo_completo(LOGIN_URL, EMAIL, PASSWORD, proyecto_data, tarea_data)

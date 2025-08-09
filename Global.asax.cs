@@ -1,5 +1,7 @@
+using GestorTarea.App_Start;
 using GestorTarea.Models;
 using System;
+using System.Web.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -15,11 +17,23 @@ namespace GestorTarea
         protected void Application_Start()
         {
 
+       
             AreaRegistration.RegisterAllAreas();
+
+            // Registrar rutas Web API
+            GlobalConfiguration.Configure(WebApiConfig.Register);
+
+            // Registrar rutas MVC
             RouteConfig.RegisterRoutes(RouteTable.Routes);
-            
+
+            // Registrar bundles si los tienes
+            BundleConfig.RegisterBundles(BundleTable.Bundles);
         }
 
     }
 
 }
+
+
+
+

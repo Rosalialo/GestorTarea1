@@ -14,38 +14,62 @@ namespace GestorTarea.Controllers
 
         // GET: Proyecto - Vista principal con grid de proyectos
         public ActionResult Index()
-        {
+        {// Verificar si el usuario está autenticado
+            int usuarioId = ObtenerUsuarioActualId();
+            if (usuarioId == 0) return RedirectToAction("Login", "Usuario");
             return View();
         }
-
-
-
-        public ActionResult IndexP(int id)
+        // GET: Proyecto/Crear - Vista para crear un nuevo proyecto
+        public ActionResult Crear()
         {
+            int usuarioId = ObtenerUsuarioActualId();
+            if (usuarioId == 0)
+                return RedirectToAction("Login", "Usuario");
+
+            var proyectos = db.Proyectos
+                .Where(p => p.IdUsuarioResponsable == usuarioId || p.UsuarioProyecto.Any(up => up.IdUsuario == usuarioId))
+                .ToList();
+
+            return View(proyectos);
+        }
+        // GET: Proyecto/IndexP/{id} - Vista para ver un proyecto específico
+        public ActionResult IndexP(int id)
+        {// Verificar si el usuario está autenticado
+            int usuarioId = ObtenerUsuarioActualId();
+            if (usuarioId == 0) return RedirectToAction("Login", "Usuario");
+
             try
-            {
-                int usuarioId = ObtenerUsuarioActualId();
+            {// Verificar si el usuario tiene permisos para ver el proyecto
+                string rolUsuario = Session["Rol"]?.ToString();
 
-                var proyecto = db.Proyectos
-                    .Include(p => p.Tareas)
-                    .FirstOrDefault(p => p.IdProyecto == id);
-
+                var proyecto = db.Proyectos.FirstOrDefault(p => p.IdProyecto == id);
                 if (proyecto == null)
                 {
                     TempData["Error"] = "Proyecto no encontrado";
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Crear");
                 }
+                // Verificar si el usuario es responsable, colaborador o administrador
+                bool esResponsable = proyecto.IdUsuarioResponsable == usuarioId;
+                bool esColaborador = db.UsuarioProyecto.Any(pu => pu.IdProyecto == id && pu.IdUsuario == usuarioId);
+                bool esAdmin = rolUsuario == "Administrador";
 
-                if (proyecto.IdUsuarioResponsable != usuarioId)
+                if (!esResponsable && !esColaborador && !esAdmin)
                 {
                     TempData["Error"] = "No tienes permisos para acceder a este proyecto";
                     return RedirectToAction("Index");
                 }
-
+                // Cargar el proyecto con sus tareas y usuarios
+                proyecto = db.Proyectos
+                    .Include(p => p.Tareas)
+                    .Include(p => p.Usuarios)
+                    .FirstOrDefault(p => p.IdProyecto == id);
+                // Verificar si el proyecto tiene tareas y usuarios
                 ViewBag.TotalTareas = proyecto.Tareas?.Count() ?? 0;
                 ViewBag.TareasCompletadas = proyecto.Tareas?.Count(t => t.Estado == "Completada") ?? 0;
+                ViewBag.NombreCreador = proyecto.Usuarios?.Name ?? "Usuario desconocido";
+                ViewBag.PuedeEliminar = esResponsable || esAdmin;
 
-                return View(proyecto); // ✅ Aquí estaba el error
+                return View(proyecto);
             }
             catch (Exception)
             {
@@ -53,78 +77,85 @@ namespace GestorTarea.Controllers
                 return RedirectToAction("Index");
             }
         }
-
-        [HttpGet]
+        // GET: Proyecto/ObtenerProyectos - Método para obtener los proyectos del usuario actual
         public JsonResult ObtenerProyectos()
         {
+            int usuarioId = ObtenerUsuarioActualId();
+            if (usuarioId == 0)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "No autorizado" }, JsonRequestBehavior.AllowGet);
+            }
+
             try
             {
-                // Obtener ID del usuario actual (ajusta según tu sistema de autenticación)
-                int usuarioId = ObtenerUsuarioActualId();
-
                 var proyectos = db.Proyectos
-                    .Where(p => p.IdUsuarioResponsable == usuarioId)
+                    .Where(p => p.IdUsuarioResponsable == usuarioId || p.UsuarioProyecto.Any(up => up.IdUsuario == usuarioId))
+                    .Include(p => p.UsuarioProyecto)
+                    .Include(p => p.Tareas)
                     .OrderByDescending(p => p.FechaInicio)
-                    .Select(p => new {
+                    .ToList()
+                    .Select(p => new
+                    {
                         id = p.IdProyecto,
                         titulo = p.Nombre,
                         descripcion = p.Descripcion,
                         fechaInicio = p.FechaInicio,
                         estado = p.Estado,
-                        members = "solo" // Por defecto, puedes ajustar esta lógica
-                    })
-                    .ToList();
+                        memberCount = p.UsuarioProyecto.Count,
+                        tareas = p.Tareas
+                            .Where(t => t.IdUsuarioAsignado == usuarioId)
+                            .Select(t => new
+                            {
+                                idTarea = t.IdTarea,
+                                titulo = t.Titulo,
+                                descripcion = t.Descripcion,
+                                estado = t.Estado,
+                                prioridad = t.Prioridad,
+                                fechaLimite = t.FechaLimite
+                            })
+                            .ToList()
+                    });
 
                 return Json(new { success = true, proyectos }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                // Log del error si tienes sistema de logging
-                return Json(new { success = false, message = "Error al obtener proyectos" }, JsonRequestBehavior.AllowGet);
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "Error al obtener proyectos: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
-
-        // POST: Crear proyecto desde el modal (nuevo método para tu frontend)
-        [HttpPost]
-        public JsonResult CrearProyecto()
+        // POST: Proyecto/CrearProyecto - Método para crear un nuevo proyecto
+        public class ProyectoCrearModel
         {
-            try
+            public string title { get; set; }
+            public string description { get; set; }
+            public string members { get; set; }
+            public List<string> emails { get; set; }
+        }
+        // POST: Proyecto/CrearProyecto - Método para crear un nuevo proyecto
+        [HttpPost]
+        public JsonResult CrearProyecto(ProyectoCrearModel model)
+        {
+            int usuarioId = ObtenerUsuarioActualId();
+            if (usuarioId == 0)
             {
-                // Leer el JSON del request
-                var json = new System.IO.StreamReader(Request.InputStream).ReadToEnd();
-                var data = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(json);
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "No autorizado" });
+            }
 
-                string title = data.title;
-                string description = data.description;
-                string members = data.members;
+            try
+            {// Validar los datos del modelo
+                if (string.IsNullOrWhiteSpace(model.title))
+                    return Json(new { success = false, message = "El título es obligatorio" });
 
-                // Validaciones básicas
-                if (string.IsNullOrWhiteSpace(title))
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "El título es obligatorio"
-                    });
-                }
-
-                if (title.Length > 100)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "El título no puede exceder 100 caracteres"
-                    });
-                }
-
-                // Obtener ID del usuario actual
-                int usuarioId = ObtenerUsuarioActualId();
-
-                // Crear nuevo proyecto
+                if (model.title.Length > 100)
+                    return Json(new { success = false, message = "El título no puede exceder 100 caracteres" });
+                // Validar que el título no exista ya
                 var proyecto = new Proyectos
                 {
-                    Nombre = title.Trim(),
-                    Descripcion = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+                    Nombre = model.title.Trim(),
+                    Descripcion = string.IsNullOrWhiteSpace(model.description) ? null : model.description.Trim(),
                     FechaInicio = DateTime.Now,
                     Estado = "Activo",
                     IdUsuarioResponsable = usuarioId
@@ -133,8 +164,38 @@ namespace GestorTarea.Controllers
                 db.Proyectos.Add(proyecto);
                 db.SaveChanges();
 
-                return Json(new
+                db.UsuarioProyecto.Add(new UsuarioProyecto
                 {
+                    IdProyecto = proyecto.IdProyecto,
+                    IdUsuario = usuarioId
+                });
+                // Si el proyecto tiene miembros adicionales, agregarlos
+                if (model.members == "conMiembros" && model.emails != null && model.emails.Count > 0)
+                {
+                    foreach (var email in model.emails)
+                    {
+                        var usuario = db.Usuarios.FirstOrDefault(u => u.Email == email);
+                        if (usuario != null)
+                        {// Verificar si el usuario ya es miembro del proyecto
+                            bool yaEsMiembro = db.UsuarioProyecto.Any(pu => pu.IdProyecto == proyecto.IdProyecto && pu.IdUsuario == usuario.IdUsuario);
+                            if (!yaEsMiembro)
+                            {
+                                db.UsuarioProyecto.Add(new UsuarioProyecto
+                                {
+                                    IdProyecto = proyecto.IdProyecto,
+                                    IdUsuario = usuario.IdUsuario
+                                });
+                            }
+                        }
+                    }
+                }
+
+                db.SaveChanges();
+                // Obtener el nombre del creador del proyecto
+                var nombreCreador = db.Usuarios.FirstOrDefault(u => u.IdUsuario == usuarioId)?.Name ?? "Usuario";
+
+                return Json(new
+                {// Retornar el proyecto creado
                     success = true,
                     message = "Proyecto creado exitosamente",
                     proyecto = new
@@ -143,310 +204,163 @@ namespace GestorTarea.Controllers
                         nombre = proyecto.Nombre,
                         descripcion = proyecto.Descripcion,
                         fechaInicio = proyecto.FechaInicio,
-                        estado = proyecto.Estado
+                        estado = proyecto.Estado,
+                        nombreCreador = nombreCreador,
+                        memberCount = 1 + (model.emails?.Count ?? 0)
                     }
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
+            {// Manejo de excepciones
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "Error interno del servidor" });
+            }
+        }
+        // POST: Proyecto/EliminarProyecto - Método para eliminar un proyecto
+        [HttpPost]
+        public JsonResult EliminarProyecto(int id)
+        {// Verificar si el usuario está autenticado
+            int usuarioId = ObtenerUsuarioActualId();
+            if (usuarioId == 0)
             {
-                // Log del error si tienes sistema de logging
-                return Json(new
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "No autorizado" });
+            }
+
+            try
+            {// Verificar si el usuario tiene permisos para eliminar el proyecto
+                string rolUsuario = Session["Rol"]?.ToString();
+                // Verificar si el proyecto existe y si el usuario es responsable o administrador
+                var proyecto = db.Proyectos.Find(id);
+                if (proyecto == null)
+                    return Json(new { success = false, message = "Proyecto no encontrado" });
+                // Verificar si el usuario es responsable del proyecto o tiene rol de administrador
+                if (proyecto.IdUsuarioResponsable != usuarioId && rolUsuario != "Administrador")
+                    return Json(new { success = false, message = "No tienes permisos para eliminar este proyecto" });
+                // Eliminar las tareas asociadas al proyecto
+                var tareasDelProyecto = db.Tareas.Where(t => t.IdProyecto == id).ToList();
+                foreach (var tarea in tareasDelProyecto)
                 {
-                    success = false,
-                    message = "Error interno del servidor"
-                });
+                    db.Tareas.Remove(tarea);
+                }
+
+                db.Proyectos.Remove(proyecto);
+                db.SaveChanges();
+                // Eliminar las relaciones de usuario con el proyecto
+                return Json(new { success = true, message = "Proyecto eliminado correctamente" });
+            }
+            catch (Exception ex)
+            {// Manejo de excepciones
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "Error al eliminar el proyecto: " + ex.Message });
             }
         }
 
         // Método auxiliar para obtener el ID del usuario actual
         private int ObtenerUsuarioActualId()
-        {
-            // Implementa según tu sistema de autenticación
-            // Ejemplos:
-
-            // Si usas Session:
+        {// Verificar si el usuario ya está en sesión
             if (Session["UsuarioId"] != null)
-            {
                 return (int)Session["UsuarioId"];
+
+            if (Session["Usuario"] != null)
+            {// Buscar el usuario en la base de datos
+                var usuario = db.Usuarios.FirstOrDefault(u => u.Name == Session["Usuario"].ToString() && u.Activo);
+                if (usuario != null)
+                {
+                    Session["UsuarioId"] = usuario.IdUsuario;
+                    return usuario.IdUsuario;
+                }
             }
-
-            // Si usas algún claim o cookie personalizada:
-            // return int.Parse(User.Identity.Name); // si guardas el ID en Name
-
-            // Si tienes una tabla de usuarios y usas el nombre:
-            // var usuario = db.Usuarios.FirstOrDefault(u => u.NombreUsuario == User.Identity.Name);
-            // return usuario?.IdUsuario ?? 0;
-
-            // Temporal para testing (reemplaza con tu lógica):
-            return 1; // ID de usuario hardcodeado - CAMBIAR POR TU LÓGICA
+            return 0;
         }
 
-        // GET: Proyecto/Crear (mantener para compatibilidad)
-        public ActionResult Crear()
-        {
-            ViewBag.Usuarios = db.Usuarios.Where(u => u.Activo).ToList();
-            return View();
-        }
-
-        // POST: Crear proyecto (método original - mantener para compatibilidad)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Crear(Models.Proyectos proyecto)
-        {
-            ViewBag.Usuarios = db.Usuarios.Where(u => u.Activo).ToList();
-            if (ModelState.IsValid)
-            {
-                proyecto.FechaInicio = DateTime.Now;
-                proyecto.Estado = "Activo";
-                db.Proyectos.Add(proyecto);
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-            return View(proyecto);
-        }
-
-        // POST: Crear proyecto AJAX (método original - mantener para compatibilidad)
-        [HttpPost]
-        public JsonResult CrearAjax(Proyectos proyecto)
-        {
-            if (ModelState.IsValid)
-            {
-                proyecto.FechaInicio = DateTime.Now;
-                proyecto.Estado = "Activo";
-                db.Proyectos.Add(proyecto);
-                db.SaveChanges();
-                return Json(new { success = true, id = proyecto.IdProyecto });
-            }
-            return Json(new { success = false });
-        }
-
-        // GET: Detalles del proyecto
-        public ActionResult Detalles(int id)
-        {
-            var proyecto = db.Proyectos.Find(id);
-            if (proyecto == null)
-                return HttpNotFound();
-            return View(proyecto);
-        }
-
-        // GET: Editar proyecto
-        public ActionResult Editar(int id)
-        {
-            var proyecto = db.Proyectos.Find(id);
-            if (proyecto == null)
-                return HttpNotFound();
-
-            ViewBag.Usuarios = db.Usuarios.Where(u => u.Activo).ToList();
-            return View(proyecto);
-        }
-
-        // POST: Editar proyecto
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Editar(Proyectos proyecto)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Entry(proyecto).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-
-            ViewBag.Usuarios = db.Usuarios.Where(u => u.Activo).ToList();
-            return View(proyecto);
-        }
-
-        // POST: Eliminar proyecto
-        [HttpPost]
-        public JsonResult EliminarTarea(int id)
-        {
-            try
-            {
-                int usuarioId = ObtenerUsuarioActualId();
-
-                var tarea = db.Tareas.Find(id);
-                if (tarea == null)
-                    return Json(new { success = false, message = "Tarea no encontrada." });
-
-                if (tarea.IdUsuarioAsignado != usuarioId)
-                    return Json(new { success = false, message = "No tienes permiso para eliminar esta tarea." });
-
-                db.Tareas.Remove(tarea);
-                db.SaveChanges();
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-
-        // GET: Listar proyectos (vista alternativa)
-        public ActionResult Indexes()
-        {
+        // Otros métodos (Crear, Editar, EliminarTarea, etc) deberían incluir esta misma verificación de sesión al inicio.
+        public JsonResult ObtenerTareasPorProyecto(int idProyecto)
+        {// Verificar si el usuario está autenticado
             int usuarioId = ObtenerUsuarioActualId();
-            var proyectos = db.Proyectos
-                .Where(p => p.IdUsuarioResponsable == usuarioId)
-                .OrderByDescending(p => p.FechaInicio)
+            if (usuarioId == 0)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "No autorizado" }, JsonRequestBehavior.AllowGet);
+            }
+
+            // Verificar que el usuario es responsable o miembro del proyecto
+            bool esMiembro = db.Proyectos.Any(p =>
+                p.IdProyecto == idProyecto &&
+                (p.IdUsuarioResponsable == usuarioId || p.UsuarioProyecto.Any(up => up.IdUsuario == usuarioId))
+            );
+
+            if (!esMiembro)
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "No tienes acceso a este proyecto" }, JsonRequestBehavior.AllowGet);
+            }
+            // Obtener las tareas del proyecto
+            var tareas = db.Tareas
+                .Where(t => t.IdProyecto == idProyecto)
+                .Select(t => new
+                {
+                    t.IdTarea,
+                    t.Titulo,
+                    t.Descripcion,
+                    t.Estado,
+                    t.Prioridad,
+                    t.FechaLimite,
+                    NombreUsuario = t.Usuarios != null ? t.Usuarios.Name : null
+                })
                 .ToList();
 
-            return View(proyectos);
+            return Json(new { success = true, tareas }, JsonRequestBehavior.AllowGet);
         }
-
-        // GET: Listar tareas de un proyecto
-        public ActionResult ListTareas(int proyectoId)
-        {
-            var proyecto = db.Proyectos.Include("Tareas").FirstOrDefault(p => p.IdProyecto == proyectoId);
-            if (proyecto == null)
-                return HttpNotFound();
-
-            // Verificar que el usuario actual puede ver este proyecto
-            int usuarioId = ObtenerUsuarioActualId();
-            if (proyecto.IdUsuarioResponsable != usuarioId)
-                return new HttpUnauthorizedResult();
-
-            var tareas = proyecto.Tareas.ToList();
-            return View(tareas);
-        }
+        // Método para crear una nueva tarea en un proyecto
         [HttpPost]
-        public JsonResult GuardarTarea(int idProyecto, string titulo, string descripcion, string prioridad, string estado, DateTime? fechaVencimiento, int progreso)
+        public JsonResult CrearTarea(int idProyecto, string titulo, string descripcion, string estado)
         {
-            try
+            int usuarioId = ObtenerUsuarioActualId();
+            if (usuarioId == 0)
             {
-                var nuevaTarea = new Tareas
-                {
-                    IdProyecto = idProyecto,
-                    Titulo = titulo,
-                    Descripcion = descripcion,
-                    Prioridad = prioridad,
-                    Estado = estado,
-                    FechaCreacion = DateTime.Now,
-                    FechaLimite = fechaVencimiento,
-                    Progreso = progreso,
-                    IdUsuarioAsignado = ObtenerUsuarioActualId() // Asigna al usuario actual
-                };
-
-                db.Tareas.Add(nuevaTarea);
-                db.SaveChanges();
-
-                return Json(new { success = true, id = nuevaTarea.IdTarea });
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "No autorizado" });
             }
-            catch (Exception ex)
+
+            // Verificar que usuario pertenece al proyecto
+            bool esMiembro = db.Proyectos.Any(p =>
+                p.IdProyecto == idProyecto &&
+                (p.IdUsuarioResponsable == usuarioId || p.UsuarioProyecto.Any(up => up.IdUsuario == usuarioId))
+            );
+            // Verificar si el usuario es responsable o miembro del proyecto
+            if (!esMiembro)
             {
-                return Json(new { success = false, message = ex.Message });
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "No tienes acceso a este proyecto" });
             }
+            // Validar los datos de la tarea
+            if (string.IsNullOrWhiteSpace(titulo))
+                return Json(new { success = false, message = "El título es obligatorio" });
+
+            var tarea = new Tareas
+            {
+                IdProyecto = idProyecto,
+                Titulo = titulo.Trim(),
+                Descripcion = string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim(),
+                Estado = estado ?? "pendiente",
+                IdUsuarioAsignado = usuarioId, // Opcional: asignar a quien crea la tarea
+                FechaLimite = null,
+                Prioridad = "media"
+            };
+
+            db.Tareas.Add(tarea);
+            db.SaveChanges();
+
+            return Json(new { success = true, message = "Tarea creada correctamente", tareaId = tarea.IdTarea });
         }
 
-
-        // Dispose
+        // Método para editar una tarea existente
         protected override void Dispose(bool disposing)
         {
             if (disposing)
-            {
                 db.Dispose();
-            }
             base.Dispose(disposing);
         }
-
-
-
-        //[HttpPost]
-        //public JsonResult EliminarTarea(int id)
-        //{
-        //    try
-        //    {
-        //        using (var db = new GestorTareasEntities())
-        //        {
-        //            var tarea = db.Tareas.Find(id);
-        //            if (tarea != null)
-        //            {
-        //                db.Tareas.Remove(tarea);
-        //                db.SaveChanges();
-        //                return Json(new { success = true });
-        //            }
-        //            return Json(new { success = false, message = "Tarea no encontrada." });
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Json(new { success = false, message = ex.Message });
-        //    }
-        //}
-
-
-
-        public JsonResult ObtenerTarea(int id)
-        {
-            using (var db = new GestorTareasEntities())
-            {
-                var tarea = db.Tareas.Find(id);
-                return Json(tarea, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-        [HttpPost]
-        public JsonResult EditarTarea(Tareas tareaEditada)
-        {
-            try
-            {
-                using (var db = new GestorTareasEntities())
-                {
-                    var tarea = db.Tareas.Find(tareaEditada.IdTarea);
-                    if (tarea != null)
-                    {
-                        tarea.Titulo = tareaEditada.Titulo;
-                        tarea.Descripcion = tareaEditada.Descripcion;
-                        tarea.Prioridad = tareaEditada.Prioridad;
-                        tarea.Estado = tareaEditada.Estado;
-                        tarea.FechaLimite = tareaEditada.FechaLimite;
-                        tarea.Progreso = tareaEditada.Progreso;
-
-                        db.SaveChanges();
-                        return Json(new { success = true });
-                    }
-                    return Json(new { success = false, message = "Tarea no encontrada." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        public JsonResult ObtenerTareasPorProyecto(int idProyecto)
-        {
-            try
-            {
-                int usuarioId = ObtenerUsuarioActualId();
-
-                var proyecto = db.Proyectos.Include("Tareas").FirstOrDefault(p => p.IdProyecto == idProyecto);
-                if (proyecto == null || proyecto.IdUsuarioResponsable != usuarioId)
-                {
-                    return Json(new { success = false, message = "No autorizado o proyecto no encontrado" }, JsonRequestBehavior.AllowGet);
-                }
-
-                var tareas = proyecto.Tareas.Select(t => new
-                {
-                    id = t.IdTarea,
-                    titulo = t.Titulo,
-                    descripcion = t.Descripcion,
-                    prioridad = t.Prioridad,
-                    estado = t.Estado,
-                    fechaLimite = t.FechaLimite?.ToString("yyyy-MM-dd"),
-                    progreso = t.Progreso,
-                    usuarioId = t.IdUsuarioAsignado
-                }).ToList();
-
-                return Json(new { success = true, tareas }, JsonRequestBehavior.AllowGet);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
-            }
-        }
-
-
     }
 }

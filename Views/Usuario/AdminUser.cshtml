@@ -14,7 +14,8 @@
             <th>Correo</th>
             <th>Rol</th>
             <th>Activo</th>
-            <th>Fecha</th>
+            <th>FechaRegistro</th>
+            <th>FechaUltimoAcceso</th>
             <th>Acción</th>
         </tr>
     </thead>
@@ -40,6 +41,8 @@
                     </select>
                 </td>
                 <td>@u.Fecha.ToString("dd/MM/yyyy")</td>
+                <td>@(u.FechaUltimoAcceso.HasValue ? u.FechaUltimoAcceso.Value.ToString("dd/MM/yyyy") : "Sin acceso")</td>
+
                 <td>
                     <button class="btn btn-sm btn-success btn-guardar">
                         <i class="bi bi-check-circle"></i> Guardar

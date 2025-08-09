@@ -13,6 +13,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 
     @Styles.Render("~/Content/css")
@@ -22,20 +24,97 @@
 
     <!-- Header superior -->
     <header class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+        <!-- Logo y título -->
+        <div class="d-flex align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="40" height="40" class="me-3">
+                <!-- Fondo con gradiente -->
+                <defs>
+                    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                    </linearGradient>
+                    <linearGradient id="taskGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+                    </linearGradient>
+                    <linearGradient id="checkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#56ab2f;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#a8e6cf;stop-opacity:1" />
+                    </linearGradient>
+                    <!-- Sombra -->
+                    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="rgba(0,0,0,0.3)" />
+                    </filter>
+                </defs>
+
+                <!-- Fondo circular -->
+                <circle cx="100" cy="100" r="90" fill="url(#bgGradient)" filter="url(#shadow)" />
+
+                <!-- Tablero de tareas (clipboard) -->
+                <rect x="60" y="40" width="80" height="100" rx="8" ry="8" fill="white" opacity="0.95" />
+                <rect x="55" y="35" width="90" height="110" rx="12" ry="12" fill="none" stroke="white" stroke-width="3" opacity="0.8" />
+
+                <!-- Clip superior -->
+                <rect x="85" y="25" width="30" height="20" rx="10" ry="10" fill="url(#taskGradient)" />
+                <rect x="90" y="30" width="20" height="10" rx="5" ry="5" fill="white" opacity="0.7" />
+
+                <!-- Líneas de tareas -->
+                <rect x="70" y="55" width="60" height="3" rx="1" fill="#667eea" opacity="0.6" />
+                <rect x="70" y="70" width="50" height="3" rx="1" fill="#667eea" opacity="0.6" />
+                <rect x="70" y="85" width="55" height="3" rx="1" fill="#667eea" opacity="0.6" />
+                <rect x="70" y="100" width="45" height="3" rx="1" fill="#667eea" opacity="0.6" />
+                <rect x="70" y="115" width="40" height="3" rx="1" fill="#667eea" opacity="0.6" />
+
+                <!-- Checkmarks -->
+                <circle cx="75" cy="56" r="4" fill="url(#checkGradient)" />
+                <path d="M 72 56 L 74 58 L 78 54" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+
+                <circle cx="75" cy="71" r="4" fill="url(#checkGradient)" />
+                <path d="M 72 71 L 74 73 L 78 69" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" />
+
+                <circle cx="75" cy="86" r="4" fill="#e0e0e0" />
+                <circle cx="75" cy="101" r="4" fill="#e0e0e0" />
+                <circle cx="75" cy="116" r="4" fill="#e0e0e0" />
+
+                <!-- Efecto de brillo -->
+                <ellipse cx="80" cy="60" rx="25" ry="15" fill="white" opacity="0.1" />
+            </svg>
+
+            <h4 class="mb-0 fw-bold text-dark">
+                <span class="text-primary">Gestor</span> de <span class="text-secondary">Tareas</span>
+            </h4>
+        </div>
+
+        <!-- Barra de búsqueda centrada -->
         <div class="input-group w-50">
             <input type="search" class="form-control rounded" placeholder="Buscar..." aria-label="Buscar" />
             <span class="input-group-text border-0">
                 <i class="fas fa-search"></i>
             </span>
         </div>
-        <button type="button" class="btn btn-outline-primary">Crear Proyecto</button>
+        <!-- Bienvenida al usuario -->
+        <div class="ms-4">
+            <span class="fw-semibold text-dark">
+                Welcome @Session["Usuario"]
+            </span>
+        </div>
+        <!-- Espacio para elementos adicionales (menú de usuario, notificaciones, etc.) -->
+        <div class="d-flex align-items-center">
+            <!-- Puedes agregar aquí botones de notificaciones, perfil de usuario, etc. -->
+
+            <button class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-user"></i>
+            </button>
+        </div>
     </header>
 
+  
+    @*<button type="button" class="btn btn-outline-primary">Crear Proyecto</button>*@
     <!-- Contenedor principal: barra lateral + contenido -->
     <div class="d-flex">
         <!-- Barra lateral -->
-        <aside class="d-flex flex-column flex-shrink-0 bg-body-tertiary p-3" style="width: 4.5rem; height: 100vh;">cd
-            docker system prune -a --volumes
+        <aside class="d-flex flex-column flex-shrink-0 bg-body-tertiary p-3" style="width: 4.5rem; height: 100vh;">
+
 
             <a href="/" class="d-block mb-3 text-center">
                 <svg class="bi pe-none" width="40" height="32"><use xlink:href="#bootstrap"></use></svg>

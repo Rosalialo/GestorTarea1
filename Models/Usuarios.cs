@@ -20,7 +20,7 @@ namespace GestorTarea.Models
             this.Comentarios = new HashSet<Comentarios>();
             this.Proyectos = new HashSet<Proyectos>();
             this.Tareas = new HashSet<Tareas>();
-            this.Proyectos1 = new HashSet<Proyectos>();
+            this.UsuarioProyecto = new HashSet<UsuarioProyecto>();
         }
     
         public int IdUsuario { get; set; }
@@ -39,6 +39,6 @@ namespace GestorTarea.Models
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Tareas> Tareas { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Proyectos> Proyectos1 { get; set; }
+        public virtual ICollection<UsuarioProyecto> UsuarioProyecto { get; set; }
     }
 }

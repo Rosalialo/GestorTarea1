@@ -25,10 +25,12 @@ namespace GestorTarea.Models
             throw new UnintentionalCodeFirstException();
         }
     
-        public virtual DbSet<Usuarios> Usuarios { get; set; }
         public virtual DbSet<Adjuntos> Adjuntos { get; set; }
         public virtual DbSet<Comentarios> Comentarios { get; set; }
         public virtual DbSet<Proyectos> Proyectos { get; set; }
         public virtual DbSet<Tareas> Tareas { get; set; }
+        public virtual DbSet<UsuarioProyecto> UsuarioProyecto { get; set; }
+        public virtual DbSet<Usuarios> Usuarios { get; set; }
+        public virtual DbSet<Invitaciones> Invitaciones { get; set; }
     }
 }

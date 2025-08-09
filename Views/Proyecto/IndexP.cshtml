@@ -1,19 +1,30 @@
 ﻿@model GestorTarea.Models.Proyectos
+
 @{
     ViewBag.Title = "Detalle del Proyecto";
     string nombreProyecto = ViewBag.GestorTarea as string;
 }
 
-
 <a href="@Url.Action("Crear", "Proyecto")" class="btn btn-outline-secondary me-2">
     <i class="fas fa-arrow-left"></i> Volver a mis proyectos
 </a>
 
-<h2 class="text-primary">@Model.Nombre</h2>
-<p>@Model.Descripcion</p>
-
-
-
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="text-primary">@Model.Nombre</h2>
+        <p>@Model.Descripcion</p>
+        <small class="text-muted">
+            <i class="fas fa-user"></i> Creado por: @ViewBag.NombreCreador
+            <span class="ms-3"><i class="fas fa-calendar"></i> @Model.FechaInicio.ToString("dd/MM/yyyy")</span>
+        </small>
+    </div>
+    @if (ViewBag.PuedeEliminar != null && (bool)ViewBag.PuedeEliminar)
+    {
+        <button class="btn btn-danger" onclick="confirmarEliminarProyecto(@Model.IdProyecto)">
+            <i class="fas fa-trash"></i> Eliminar Proyecto
+        </button>
+    }
+</div>
 
 @Styles.Render("~/Content/IndexP.css")
 <div class="container-fluid">
@@ -27,10 +38,11 @@
     </div>
 
     <div id="contenedorListas" class="listas-container d-flex overflow-auto">
-
+        <!-- Las listas se cargarán aquí -->
     </div>
 </div>
-<!--Modal para crear nueva lista-->
+
+<!-- Modal para crear nueva lista -->
 <div class="modal fade" id="modalNuevaLista" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -51,6 +63,8 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para crear/editar tarea -->
 <div class="modal fade" id="modalTarea" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -61,22 +75,17 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-8">
-                        Título de la tarea
                         <div class="mb-3">
                             <label for="tituloTarea" class="form-label fw-bold">Título</label>
                             <input type="text" class="form-control" id="tituloTarea" placeholder="Ingresa el título de la tarea">
                         </div>
-                        <!--Descripció-->
                         <div class="mb-3">
                             <label for="descripcionTarea" class="form-label fw-bold">Descripción</label>
                             <textarea class="form-control" id="descripcionTarea" rows="4" placeholder="Describe los detalles de la tarea..."></textarea>
                         </div>
-                        <!--Lista de verificación-->
                         <div class="mb-3">
                             <label class="form-label fw-bold">Lista de Verificación</label>
-                            <div id="listaVerificacion">
-                                <!--Los elementos de verificación se agregarán aquí-->
-                            </div>
+                            <div id="listaVerificacion"></div>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarItem">
                                 <i class="fas fa-plus"></i> Agregar elemento
                             </button>
@@ -84,7 +93,6 @@
                     </div>
 
                     <div class="col-md-4">
-                        <!--prioridad-->
                         <div class="mb-3">
                             <label for="prioridadTarea" class="form-label fw-bold">Prioridad</label>
                             <select class="form-select" id="prioridadTarea">
@@ -93,12 +101,10 @@
                                 <option value="alta">🔴 Alta</option>
                             </select>
                         </div>
-                        <!--Fecha de vencimiento-->
                         <div class="mb-3">
                             <label for="fechaVencimiento" class="form-label fw-bold">Fecha de Vencimiento</label>
                             <input type="date" class="form-control" id="fechaVencimiento">
                         </div>
-                        <!--Estado-->
                         <div class="mb-3">
                             <label for="estadoTarea" class="form-label fw-bold">Estado</label>
                             <select class="form-select" id="estadoTarea">
@@ -107,12 +113,9 @@
                                 <option value="completado">Completado</option>
                             </select>
                         </div>
-                        <!--Etiquetas-->
                         <div class="mb-3">
                             <label class="form-label fw-bold">Etiquetas</label>
-                            <div id="etiquetas" class="mb-2">
-                                <!--Las etiquetas seleccionadas aparecerán aquí-->
-                            </div>
+                            <div id="etiquetas" class="mb-2"></div>
                             <div class="d-flex flex-wrap gap-1">
                                 <span class="badge bg-primary etiqueta-disponible" data-etiqueta="frontend">Frontend</span>
                                 <span class="badge bg-success etiqueta-disponible" data-etiqueta="backend">Backend</span>
@@ -121,7 +124,6 @@
                                 <span class="badge bg-secondary etiqueta-disponible" data-etiqueta="docs">Documentación</span>
                             </div>
                         </div>
-                        <!--Progreso-->
                         <div class="mb-3">
                             <label for="progresoTarea" class="form-label fw-bold">Progreso</label>
                             <input type="range" class="form-range" id="progresoTarea" min="0" max="100" value="0">
@@ -145,70 +147,84 @@
     </div>
 </div>
 
-
-
-
-
-
-
-
-
-
 <script>
-        let contadorListas = 0;
-        let contadorTareas = 0;
-        let tareaActual = null;
+    let contadorListas = 0;
+    let contadorTareas = 0;
+    let tareaActual = null;
+    const idProyecto = @Model.IdProyecto;
+    const tareasExistentes = []; // Para almacenar tareas del servidor
 
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', function () {
-            inicializarEventos();
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function () {
+        inicializarEventos();
+        cargarTareasExistentes();
+        crearListasIniciales();
+    });
+
+    function inicializarEventos() {
+        document.getElementById('btnNuevaLista').addEventListener('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('modalNuevaLista'));
+            modal.show();
         });
 
-        function inicializarEventos() {
-            // Botón nueva lista
-            document.getElementById('btnNuevaLista').addEventListener('click', function () {
-                const modal = new bootstrap.Modal(document.getElementById('modalNuevaLista'));
-                modal.show();
-            });
+        document.getElementById('btnCrearLista').addEventListener('click', crearNuevaLista);
+        document.getElementById('btnGuardarTarea').addEventListener('click', guardarTarea);
+        document.getElementById('btnEliminarTarea').addEventListener('click', eliminarTarea);
+        document.getElementById('btnAgregarItem').addEventListener('click', agregarItemVerificacion);
 
-            // Crear lista
-            document.getElementById('btnCrearLista').addEventListener('click', crearNuevaLista);
+        document.getElementById('progresoTarea').addEventListener('input', function () {
+            document.getElementById('valorProgreso').textContent = this.value + '%';
+        });
 
-            // Guardar tarea
-            document.getElementById('btnGuardarTarea').addEventListener('click', guardarTarea);
+        document.querySelectorAll('.etiqueta-disponible').forEach(etiqueta => {
+            etiqueta.addEventListener('click', toggleEtiqueta);
+        });
 
-            // Eliminar tarea
-            document.getElementById('btnEliminarTarea').addEventListener('click', eliminarTarea);
+        document.getElementById('modalTarea').addEventListener('hidden.bs.modal', limpiarModalTarea);
+    }
 
-            // Agregar item de verificación
-            document.getElementById('btnAgregarItem').addEventListener('click', agregarItemVerificacion);
+    // ✅ CORREGIDO: Cargar tareas usando la API correcta
+    function cargarTareasExistentes() {
+        const token = localStorage.getItem('token');
 
-            // Actualizar progreso
-            document.getElementById('progresoTarea').addEventListener('input', function () {
-                document.getElementById('valorProgreso').textContent = this.value + '%';
-            });
-
-            // Etiquetas
-            document.querySelectorAll('.etiqueta-disponible').forEach(etiqueta => {
-                etiqueta.addEventListener('click', toggleEtiqueta);
-            });
-
-            // Limpiar modal al cerrarse
-            document.getElementById('modalTarea').addEventListener('hidden.bs.modal', limpiarModalTarea);
-        }
-
-        function crearNuevaLista() {
-            const nombreLista = document.getElementById('nombreLista').value.trim();
-
-            if (!nombreLista) {
-                alert('Por favor ingresa un nombre para la lista');
-                return;
+        $.ajax({
+            url: `/Proyecto/ObtenerTareasPorProyecto?idProyecto=${idProyecto}`,
+            method: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    tareasExistentes.length = 0;
+                    tareasExistentes.push(...response.tareas);
+                    limpiarYRecargarTareas();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert('Error al cargar tareas');
             }
+        });
 
-            contadorListas++;
-            const listaId = `lista-${contadorListas}`;
+    }
 
-            const listaHTML = `
+    function crearListasIniciales() {
+        // Crear listas por defecto con las tareas existentes
+        setTimeout(() => {
+            crearListaConNombre('Por Hacer');
+            crearListaConNombre('En Progreso');
+            crearListaConNombre('Completado');
+
+            // Después de crear las listas, distribuir las tareas existentes
+            setTimeout(() => {
+                distribuirTareasExistentes();
+            }, 500);
+        }, 300);
+    }
+
+    function crearListaConNombre(nombreLista) {
+        contadorListas++;
+        const listaId = `lista-${contadorListas}`;
+
+        const listaHTML = `
             <div class="lista-tareas" id="${listaId}">
                 <div class="lista-header">
                     <h5 class="lista-titulo">${nombreLista}</h5>
@@ -225,129 +241,47 @@
             </div>
         `;
 
-            document.getElementById('contenedorListas').insertAdjacentHTML('beforeend', listaHTML);
+        document.getElementById('contenedorListas').insertAdjacentHTML('beforeend', listaHTML);
+    }
 
-            // Cerrar modal y limpiar
-            bootstrap.Modal.getInstance(document.getElementById('modalNuevaLista')).hide();
-            document.getElementById('nombreLista').value = '';
-        }
+    // ✅ CORREGIDO: Usar los campos correctos de la API
+    function distribuirTareasExistentes() {
+        tareasExistentes.forEach(tarea => {
+            let listaDestino = 'lista-1'; // Por defecto "Por Hacer"
 
-        function eliminarLista(listaId) {
-            if (confirm('¿Estás seguro de que quieres eliminar esta lista y todas sus tareas?')) {
-                document.getElementById(listaId).remove();
-            }
-        }
-
-        function abrirModalTarea(listaId, tareaId = null) {
-            const modal = new bootstrap.Modal(document.getElementById('modalTarea'));
-
-            if (tareaId) {
-                // Editar tarea existente
-                cargarDatosTarea(tareaId);
-                document.getElementById('tituloModalTarea').textContent = 'Editar Tarea';
-                document.getElementById('btnEliminarTarea').style.display = 'inline-block';
-                tareaActual = { listaId, tareaId };
-            } else {
-                // Nueva tarea
-                document.getElementById('tituloModalTarea').textContent = 'Nueva Tarea';
-                document.getElementById('btnEliminarTarea').style.display = 'none';
-                tareaActual = { listaId, tareaId: null };
+            // ✅ Usar campo Estado del modelo Tareas
+            if (tarea.Estado === 'en-progreso' || tarea.Estado === 'En Progreso') {
+                listaDestino = 'lista-2'; // "En Progreso"
+            } else if (tarea.Estado === 'completado' || tarea.Estado === 'Completado') {
+                listaDestino = 'lista-3'; // "Completado"
             }
 
-            modal.show();
-        }
+            mostrarTareaEnLista(listaDestino, tarea);
+        });
+    }
 
-        function cargarDatosTarea(tareaId) {
-            const tareaElement = document.getElementById(tareaId);
-            const titulo = tareaElement.querySelector('.tarea-titulo').textContent;
+    // ✅ CORREGIDO: Usar campos correctos de la respuesta API
+    function mostrarTareaEnLista(listaId, tarea) {
+        const tareaId = `tarea-db-${tarea.IdTarea}`; // ✅ Usar IdTarea
 
-            document.getElementById('tituloTarea').value = titulo;
+        // El resto del código de visualización permanece igual
+        const fechaBadge = ''; // Simplificar por ahora
 
-            // Cargar otros datos si están disponibles en el elemento
-            // (prioridad, fecha, progreso, etc.)
-        }
+        const badgeComentarios = `<span class="badge-icon badge-comentarios">
+            <span class="icon-comment"></span> 0
+        </span>`;
 
-        function guardarTarea() {
-            const titulo = document.getElementById('tituloTarea').value.trim();
-            const descripcion = document.getElementById('descripcionTarea').value.trim();
-            const prioridad = document.getElementById('prioridadTarea').value;
-            const fechaVencimiento = document.getElementById('fechaVencimiento').value;
-            const progreso = document.getElementById('progresoTarea').value;
-            const estado = document.getElementById('estadoTarea').value;
+        const badgeChecklist = '';
 
-            if (!titulo) {
-                alert('Por favor ingresa un título para la tarea');
-                return;
-            }
+        // ✅ Mostrar nombre del usuario asignado
+        const avatarHTML = `<div class="avatar-assignee" title="${tarea.NombreUsuario || 'Sin asignar'}">
+            ${obtenerIniciales(tarea.NombreUsuario)}
+        </div>`;
 
-            if (tareaActual.tareaId) {
-                // Actualizar tarea existente
-                actualizarTarea(tareaActual.tareaId, {
-                    titulo, descripcion, prioridad, fechaVencimiento, progreso, estado
-                });
-            } else {
-                // Crear nueva tarea
-                crearNuevaTarea(tareaActual.listaId, {
-                    titulo, descripcion, prioridad, fechaVencimiento, progreso, estado
-                });
-            }
-
-            // Cerrar modal
-            bootstrap.Modal.getInstance(document.getElementById('modalTarea')).hide();
-        }
-
-        function crearNuevaTarea(listaId, datos) {
-            contadorTareas++;
-            const tareaId = `tarea-${contadorTareas}`;
-
-            // Obtener etiquetas seleccionadas
-            const etiquetasSeleccionadas = Array.from(document.querySelectorAll('.etiqueta-seleccionada'))
-                .map(etiqueta => etiqueta.dataset.etiqueta);
-
-            // Calcular estado de la fecha
-            let fechaBadge = '';
-            let fechaClase = '';
-            if (datos.fechaVencimiento) {
-                const hoy = new Date();
-                const fechaVencimiento = new Date(datos.fechaVencimiento);
-                const diferenciaDias = Math.ceil((fechaVencimiento - hoy) / (1000 * 60 * 60 * 24));
-
-                if (diferenciaDias < 0) {
-                    fechaClase = 'vencida';
-                } else if (diferenciaDias <= 1) {
-                    fechaClase = 'proxima';
-                }
-
-                fechaBadge = `<span class="badge-icon badge-fecha ${fechaClase}">
-                    <span class="icon-calendar"></span>
-                    ${formatearFecha(datos.fechaVencimiento)}
-                </span>`;
-            }
-
-            // Crear badges de funcionalidad
-            const badgeComentarios = `<span class="badge-icon badge-comentarios">
-                <span class="icon-comment"></span> 3
-            </span>`;
-
-            const badgeChecklist = datos.progreso > 0 ?
-                `<span class="badge-icon badge-checklist ${datos.progreso === 100 ? 'completado' : ''}">
-                    <span class="icon-checklist"></span> ${datos.progreso === 100 ? '✓' : '1/1'}
-                </span>` : '';
-
-            // Crear etiquetas de color
-            const etiquetasColorHTML = etiquetasSeleccionadas.map(etiqueta =>
-                `<span class="etiqueta-tarea etiqueta-${etiqueta}"></span>`
-            ).join('');
-
-            // Crear avatar del asignado
-            const avatarHTML = `<div class="avatar-assignee">
-                ${datos.estado === 'completado' ? 'DM' : datos.estado === 'en-progreso' ? 'OG' : 'JM'}
-            </div>`;
-
-            const tareaHTML = `
-            <div class="tarea-card" id="${tareaId}" onclick="abrirModalTarea('${listaId}', '${tareaId}')">
-                ${etiquetasColorHTML}
-                <div class="tarea-titulo">${datos.titulo}</div>
+        const tareaHTML = `
+            <div class="tarea-card" id="${tareaId}" onclick="editarTareaExistente(${tarea.IdTarea}, '${listaId}')">
+                <div class="tarea-titulo">${tarea.Titulo}</div>
+                <div class="tarea-descripcion">${tarea.Descripcion || ''}</div>
                 <div class="tarea-footer">
                     <div class="tarea-icons">
                         ${fechaBadge}
@@ -358,49 +292,183 @@
                 </div>
             </div>
         `;
-            // Badge de estado
-            const badgeEstado = `<span class="badge bg-${datos.estado === 'completado' ? 'success' :
-                    datos.estado === 'en-progreso' ? 'warning text-dark' :
-                        'secondary'
-                } text-capitalize">${datos.estado}</span>`;
 
-            const contenedor = document.querySelector(`[data-lista="${listaId}"]`);
+        const contenedor = document.querySelector(`[data-lista="${listaId}"]`);
+        if (contenedor) {
             contenedor.insertAdjacentHTML('beforeend', tareaHTML);
         }
+    }
 
-        function actualizarTarea(tareaId, datos) {
-            const tareaElement = document.getElementById(tareaId);
-            tareaElement.querySelector('.tarea-titulo').textContent = datos.titulo;
+    function obtenerIniciales(nombreUsuario) {
+        if (!nombreUsuario) return '??';
+        const palabras = nombreUsuario.split(' ');
+        if (palabras.length >= 2) {
+            return (palabras[0][0] + palabras[1][0]).toUpperCase();
+        }
+        return nombreUsuario.substring(0, 2).toUpperCase();
+    }
 
-            // Recrear la tarea con los nuevos datos
-            const listaId = tareaElement.closest('.lista-tareas').id;
-            tareaElement.remove();
+    function editarTareaExistente(tareaId, listaId) {
+        const tarea = tareasExistentes.find(t => t.IdTarea === tareaId); // ✅ Usar IdTarea
+        if (tarea) {
+            // ✅ Cargar datos usando campos correctos
+            document.getElementById('tituloTarea').value = tarea.Titulo;
+            document.getElementById('descripcionTarea').value = tarea.Descripcion || '';
+            document.getElementById('estadoTarea').value = tarea.Estado || 'pendiente';
 
-            // Crear nueva tarea con los datos actualizados
-            const nuevoTareaId = tareaId;
-            contadorTareas--; // Compensar el incremento que se hará en crearNuevaTarea
+            document.getElementById('tituloModalTarea').textContent = 'Editar Tarea';
+            document.getElementById('btnEliminarTarea').style.display = 'inline-block';
 
-            crearNuevaTarea(listaId, datos);
+            tareaActual = {
+                listaId: listaId,
+                tareaId: `tarea-db-${tareaId}`,
+                tareaDbId: tareaId,
+                esExistente: true
+            };
 
-            // Actualizar el ID de la nueva tarea
-            const nuevaTarea = document.querySelector(`[data-lista="${listaId}"] .tarea-card:last-child`);
-            if (nuevaTarea) {
-                nuevaTarea.id = nuevoTareaId;
-            }
+            const modal = new bootstrap.Modal(document.getElementById('modalTarea'));
+            modal.show();
+        }
+    }
+
+    function crearNuevaLista() {
+        const nombreLista = document.getElementById('nombreLista').value.trim();
+
+        if (!nombreLista) {
+            alert('Por favor ingresa un nombre para la lista');
+            return;
         }
 
-        function eliminarTarea() {
-            if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+        crearListaConNombre(nombreLista);
+
+        bootstrap.Modal.getInstance(document.getElementById('modalNuevaLista')).hide();
+        document.getElementById('nombreLista').value = '';
+    }
+
+    function eliminarLista(listaId) {
+        if (confirm('¿Estás seguro de que quieres eliminar esta lista y todas sus tareas?')) {
+            document.getElementById(listaId).remove();
+        }
+    }
+
+    function abrirModalTarea(listaId, tareaId = null) {
+        const modal = new bootstrap.Modal(document.getElementById('modalTarea'));
+
+        if (tareaId) {
+            cargarDatosTarea(tareaId);
+            document.getElementById('tituloModalTarea').textContent = 'Editar Tarea';
+            document.getElementById('btnEliminarTarea').style.display = 'inline-block';
+            tareaActual = { listaId, tareaId, esExistente: false };
+        } else {
+            document.getElementById('tituloModalTarea').textContent = 'Nueva Tarea';
+            document.getElementById('btnEliminarTarea').style.display = 'none';
+            tareaActual = { listaId, tareaId: null, esExistente: false };
+        }
+
+        modal.show();
+    }
+
+    function cargarDatosTarea(tareaId) {
+        const tareaElement = document.getElementById(tareaId);
+        const titulo = tareaElement.querySelector('.tarea-titulo').textContent;
+        document.getElementById('tituloTarea').value = titulo;
+    }
+
+    // ✅ CORREGIDO: Usar API de tareas para crear
+    function guardarTarea() {
+        const titulo = document.getElementById('tituloTarea').value.trim();
+        const descripcion = document.getElementById('descripcionTarea').value.trim();
+        const estado = document.getElementById('estadoTarea').value;
+
+        if (!titulo) {
+            alert('Por favor ingresa un título para la tarea');
+            return;
+        }
+
+        if (tareaActual.esExistente) {
+            // Actualizar tarea existente (implementar después)
+            alert('Función de actualización pendiente de implementar');
+            bootstrap.Modal.getInstance(document.getElementById('modalTarea')).hide();
+        } else {
+            // ✅ Crear nueva tarea usando la API correcta
+            const token = localStorage.getItem('token');
+
+            $.ajax({
+                url: '/api/tareas/crear', // ✅ Usar endpoint correcto
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    IdProyecto: idProyecto, // ✅ Enviar IdProyecto
+                    Titulo: titulo,
+                    Descripcion: descripcion,
+                    Estado: estado
+                }),
+                success: function (response) {
+                    console.log('Tarea creada:', response);
+
+                    // ✅ Recargar tareas para que todos los usuarios las vean
+                    cargarTareasExistentes();
+
+                    // Limpiar listas y recargar
+                    setTimeout(() => {
+                        limpiarYRecargarTareas();
+                    }, 500);
+
+                    bootstrap.Modal.getInstance(document.getElementById('modalTarea')).hide();
+                    alert('Tarea creada correctamente');
+                },
+                error: function (xhr) {
+                    console.error('Error al crear tarea:', xhr.responseText);
+                    alert('Error al guardar la tarea: ' + (xhr.responseJSON?.message || 'Error desconocido'));
+                }
+            });
+        }
+    }
+
+    // ✅ NUEVA FUNCIÓN: Limpiar y recargar todas las tareas
+    function limpiarYRecargarTareas() {
+        // Limpiar todas las listas
+        document.querySelectorAll('.tareas-contenedor').forEach(contenedor => {
+            contenedor.innerHTML = '';
+        });
+
+        // Redistribuir tareas
+        setTimeout(() => {
+            distribuirTareasExistentes();
+        }, 200);
+    }
+
+    // ✅ NUEVA FUNCIÓN: Recargar tareas periódicamente (opcional)
+    function iniciarActualizacionPeriodica() {
+        setInterval(() => {
+            cargarTareasExistentes();
+            setTimeout(() => {
+                limpiarYRecargarTareas();
+            }, 500);
+        }, 30000); // Recargar cada 30 segundos
+    }
+
+    function eliminarTarea() {
+        if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+            if (tareaActual.esExistente) {
+                // TODO: Implementar eliminación en la API
+                alert('Función de eliminación pendiente de implementar');
+            } else {
+                // Eliminar tarea local
                 document.getElementById(tareaActual.tareaId).remove();
                 bootstrap.Modal.getInstance(document.getElementById('modalTarea')).hide();
             }
         }
+    }
 
-        function agregarItemVerificacion() {
-            const contenedor = document.getElementById('listaVerificacion');
-            const itemId = `item-${Date.now()}`;
+    function agregarItemVerificacion() {
+        const contenedor = document.getElementById('listaVerificacion');
+        const itemId = `item-${Date.now()}`;
 
-            const itemHTML = `
+        const itemHTML = `
             <div class="item-verificacion" id="${itemId}">
                 <input type="checkbox">
                 <input type="text" placeholder="Nuevo elemento...">
@@ -410,128 +478,59 @@
             </div>
         `;
 
-            contenedor.insertAdjacentHTML('beforeend', itemHTML);
-        }
-
-        function toggleEtiqueta(event) {
-            event.target.classList.toggle('etiqueta-seleccionada');
-        }
-
-        function limpiarModalTarea() {
-            document.getElementById('tituloTarea').value = '';
-            document.getElementById('descripcionTarea').value = '';
-            document.getElementById('prioridadTarea').value = 'media';
-            document.getElementById('fechaVencimiento').value = '';
-            document.getElementById('progresoTarea').value = '0';
-            document.getElementById('valorProgreso').textContent = '0%';
-            document.getElementById('estadoTarea').value = 'pendiente';
-            document.getElementById('listaVerificacion').innerHTML = '';
-
-            // Limpiar etiquetas seleccionadas
-            document.querySelectorAll('.etiqueta-seleccionada').forEach(etiqueta => {
-                etiqueta.classList.remove('etiqueta-seleccionada');
-            });
-
-            tareaActual = null;
-        }
-
-        function formatearFecha(fecha) {
-            const date = new Date(fecha);
-            const mes = date.toLocaleDateString('es-ES', { month: 'short' });
-            const dia = date.getDate();
-            return `${dia} ${mes}`;
-        }
-        function guardarTarea() {
-        const titulo = document.getElementById('tituloTarea').value.trim();
-        const descripcion = document.getElementById('descripcionTarea').value.trim();
-        const prioridad = document.getElementById('prioridadTarea').value;
-        const fechaVencimiento = document.getElementById('fechaVencimiento').value;
-        const progreso = document.getElementById('progresoTarea').value;
-        const estado = document.getElementById('estadoTarea').value;
-        const idProyecto = @Model.IdProyecto;
-
-        if (!titulo) {
-            alert('Por favor ingresa un título para la tarea');
-            return;
-        }
-
-        $.ajax({
-            url: '@Url.Action("GuardarTarea", "Proyecto")',
-            method: 'POST',
-            data: {
-                idProyecto,
-                titulo,
-                descripcion,
-                prioridad,
-                estado,
-                fechaVencimiento,
-                progreso
-            },
-            success: function (response) {
-                if (response.success) {
-                    crearNuevaTarea(tareaActual.listaId, {
-                        titulo,
-                        descripcion,
-                        prioridad,
-                        fechaVencimiento,
-                        progreso,
-                        estado
-                    });
-                    bootstrap.Modal.getInstance(document.getElementById('modalTarea')).hide();
-                } else {
-                    alert('Error al guardar: ' + response.message);
-                }
-            },
-            error: function () {
-                alert('Error al guardar la tarea');
-            }
-        });
+        contenedor.insertAdjacentHTML('beforeend', itemHTML);
     }
 
+    function toggleEtiqueta(event) {
+        event.target.classList.toggle('etiqueta-seleccionada');
+    }
 
-        // Crear algunas listas de ejemplo al cargar la página
-        window.addEventListener('load', function () {
-            // Simular creación de listas de ejemplo
-            setTimeout(() => {
-                document.getElementById('nombreLista').value = 'Terminado';
-                crearNuevaLista();
+    function limpiarModalTarea() {
+        document.getElementById('tituloTarea').value = '';
+        document.getElementById('descripcionTarea').value = '';
+        document.getElementById('prioridadTarea').value = 'media';
+        document.getElementById('fechaVencimiento').value = '';
+        document.getElementById('progresoTarea').value = '0';
+        document.getElementById('valorProgreso').textContent = '0%';
+        document.getElementById('estadoTarea').value = 'pendiente';
+        document.getElementById('listaVerificacion').innerHTML = '';
 
-                // Agregar tareas de ejemplo
-                setTimeout(() => {
-                    // Tarea 1 - Completada
-                    document.getElementById('tituloTarea').value = 'Definir requerimientos del chatbot';
-                    document.getElementById('fechaVencimiento').value = '2025-06-01';
-                    document.getElementById('estadoTarea').value = 'completado';
-                    document.getElementById('progresoTarea').value = '100';
-                    document.querySelectorAll('.etiqueta-disponible')[0].classList.add('etiqueta-seleccionada');
-                    tareaActual = { listaId: 'lista-1', tareaId: null };
-                    guardarTarea();
-
-                    // Tarea 2 - En progreso
-                    setTimeout(() => {
-                        document.getElementById('tituloTarea').value = 'Prototipo visual del chatbot';
-                        document.getElementById('fechaVencimiento').value = '2025-05-28';
-                        document.getElementById('estadoTarea').value = 'en-progreso';
-                        document.getElementById('progresoTarea').value = '50';
-                        limpiarModalTarea();
-                        document.querySelectorAll('.etiqueta-disponible')[2].classList.add('etiqueta-seleccionada');
-                        tareaActual = { listaId: 'lista-1', tareaId: null };
-                        guardarTarea();
-
-                        // Tarea 3 - Pendiente con prioridad alta
-                        setTimeout(() => {
-                            document.getElementById('tituloTarea').value = 'Diseñar flujo de conversación';
-                            document.getElementById('fechaVencimiento').value = '2025-06-03';
-                            document.getElementById('estadoTarea').value = 'pendiente';
-                            document.getElementById('prioridadTarea').value = 'alta';
-                            limpiarModalTarea();
-                            document.querySelectorAll('.etiqueta-disponible')[2].classList.add('etiqueta-seleccionada');
-                            tareaActual = { listaId: 'lista-1', tareaId: null };
-                            guardarTarea();
-                        }, 200);
-                    }, 200);
-                }, 300);
-            }, 500);
+        document.querySelectorAll('.etiqueta-seleccionada').forEach(etiqueta => {
+            etiqueta.classList.remove('etiqueta-seleccionada');
         });
-</script>
 
+        tareaActual = null;
+    }
+
+    function formatearFecha(fecha) {
+        const date = new Date(fecha);
+        const mes = date.toLocaleDateString('es-ES', { month: 'short' });
+        const dia = date.getDate();
+        return `${dia} ${mes}`;
+    }
+
+    // Función para eliminar proyecto (solo visible para creador y admin)
+    function confirmarEliminarProyecto(idProyecto) {
+        if (confirm('¿Estás seguro de que quieres eliminar este proyecto? Esta acción no se puede deshacer.')) {
+            $.ajax({
+                url: '@Url.Action("EliminarProyecto", "Proyecto")',
+                method: 'POST',
+                data: { id: idProyecto },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Proyecto eliminado correctamente');
+                        window.location.href = '@Url.Action("Crear", "Proyecto")';
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error al eliminar el proyecto');
+                }
+            });
+        }
+    }
+
+    // ✅ Iniciar actualización periódica (opcional, descomenta si la quieres)
+    // setTimeout(iniciarActualizacionPeriodica, 5000);
+</script>

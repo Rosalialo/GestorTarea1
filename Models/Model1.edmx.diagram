@@ -4,19 +4,23 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="0ba5e2eac82e475ab81509b3e4ffe78c" Name="Diagram1" ZoomLevel="73">
-        <EntityTypeShape EntityType="GestorTareasModel.Usuarios" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="GestorTareasModel.Adjuntos" Width="1.5" PointX="7.5" PointY="3.375" />
-        <EntityTypeShape EntityType="GestorTareasModel.Comentarios" Width="1.5" PointX="3" PointY="0.75" />
-        <EntityTypeShape EntityType="GestorTareasModel.Proyectos" Width="1.5" PointX="3" PointY="4.625" />
-        <EntityTypeShape EntityType="GestorTareasModel.Tareas" Width="1.5" PointX="5.25" PointY="2.625" />
-        <AssociationConnector Association="GestorTareasModel.FK_Adjuntos_Tareas" />
-        <AssociationConnector Association="GestorTareasModel.FK_Comentarios_Tareas" />
-        <AssociationConnector Association="GestorTareasModel.FK_Comentarios_Usuarios" />
-        <AssociationConnector Association="GestorTareasModel.FK_Proyectos_Usuarios" />
-        <AssociationConnector Association="GestorTareasModel.FK_Tareas_Proyectos" />
-        <AssociationConnector Association="GestorTareasModel.FK_Tareas_Usuarios" />
-        <AssociationConnector Association="GestorTareasModel.UsuarioProyecto" />
+      <Diagram DiagramId="73e44797d0514c9b884511db48b53ff4" Name="Diagram1" ZoomLevel="74">
+        <EntityTypeShape EntityType="GestorTareasModel.Adjuntos" Width="1.5" PointX="8" PointY="5.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="GestorTareasModel.Comentarios" Width="1.5" PointX="3" PointY="4" IsExpanded="true" />
+        <EntityTypeShape EntityType="GestorTareasModel.Proyectos" Width="1.5" PointX="3" PointY="7.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="GestorTareasModel.Tareas" Width="1.5" PointX="6" PointY="4.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="GestorTareasModel.UsuarioProyecto" Width="1.5" PointX="9.875" PointY="4.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="GestorTareasModel.Usuarios" Width="1.5" PointX="0.75" PointY="4.5" IsExpanded="true" />
+        <AssociationConnector Association="GestorTareasModel.FK_Adjuntos_Tareas" ManuallyRouted="false" />
+        <AssociationConnector Association="GestorTareasModel.FK_Comentarios_Tareas" ManuallyRouted="false" />
+        <AssociationConnector Association="GestorTareasModel.FK_Comentarios_Usuarios" ManuallyRouted="false" />
+        <AssociationConnector Association="GestorTareasModel.FK_Proyectos_Usuarios" ManuallyRouted="false" />
+        <AssociationConnector Association="GestorTareasModel.FK_Tareas_Proyectos" ManuallyRouted="false" />
+        <AssociationConnector Association="GestorTareasModel.FK_UsuarioProyecto_Proyectos" ManuallyRouted="false" />
+        <AssociationConnector Association="GestorTareasModel.FK_Tareas_Usuarios" ManuallyRouted="false" />
+        <AssociationConnector Association="GestorTareasModel.FK_UsuarioProyecto_Usuarios" ManuallyRouted="false" />
+        <EntityTypeShape EntityType="GestorTareasModel.Invitaciones" Width="1.5" PointX="8.625" PointY="8.25" />
+        <AssociationConnector Association="GestorTareasModel.FK_Invitaciones_Proyectos" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>
